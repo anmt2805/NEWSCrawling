@@ -76,6 +76,24 @@ jobs:
             --tag "${SERVER_IMAGE}" \
             .
 
+      - name: Validate Cloud Run env secret
+        env:
+          CLOUD_RUN_ENV_YAML: ${{ secrets.CLOUD_RUN_ENV_YAML }}
+        shell: bash
+        run: |
+          if [ -z "$CLOUD_RUN_ENV_YAML" ]; then
+            echo "::error::Missing required secret: CLOUD_RUN_ENV_YAML"
+            exit 1
+          fi
+
+      - name: Prepare Cloud Run env file
+        working-directory: server
+        env:
+          CLOUD_RUN_ENV_YAML: ${{ secrets.CLOUD_RUN_ENV_YAML }}
+        shell: bash
+        run: |
+          printf "%s" "$CLOUD_RUN_ENV_YAML" > env.yaml
+
       - name: Deploy Cloud Run service
         working-directory: server
         run: |
@@ -87,7 +105,7 @@ jobs:
             --min-instances 1 \
             --max-instances 2 \
             --timeout 900s \
-            --env-vars-file ../env.yaml
+            --env-vars-file env.yaml
 
   deploy_admin_web:
     needs: changes
