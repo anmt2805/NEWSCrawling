@@ -71,6 +71,8 @@ jobs:
         run: |
           gcloud builds submit \
             --project "${SERVER_PROJECT_ID}" \
+            --default-buckets-behavior=REGIONAL_USER_OWNED_BUCKET \
+            --suppress-logs \
             --tag "${SERVER_IMAGE}" \
             .
 
