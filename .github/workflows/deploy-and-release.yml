@@ -185,6 +185,8 @@ jobs:
           keyAlias=$ANDROID_KEY_ALIAS
           storeFile=upload-keystore.jks
           EOF
+          cp android/key.properties android/app/key.properties
+          ls -l android/upload-keystore.jks android/key.properties android/app/key.properties
 
       - name: Build AAB (obfuscated + symbols)
         working-directory: app
