@@ -132,6 +132,40 @@ jobs:
         working-directory: app
         run: flutter pub get
 
+      - name: Validate Android signing secrets
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+        shell: bash
+        run: |
+          missing=0
+          [ -z "$ANDROID_KEYSTORE_BASE64" ] && echo "::error::Missing required secret: ANDROID_KEYSTORE_BASE64" && missing=1
+          [ -z "$ANDROID_KEY_ALIAS" ] && echo "::error::Missing required secret: ANDROID_KEY_ALIAS" && missing=1
+          [ -z "$ANDROID_KEY_PASSWORD" ] && echo "::error::Missing required secret: ANDROID_KEY_PASSWORD" && missing=1
+          [ -z "$ANDROID_STORE_PASSWORD" ] && echo "::error::Missing required secret: ANDROID_STORE_PASSWORD" && missing=1
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
+      - name: Prepare Android signing files
+        working-directory: app
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+        shell: bash
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/upload-keystore.jks
+          cat > android/key.properties <<EOF
+          storePassword=$ANDROID_STORE_PASSWORD
+          keyPassword=$ANDROID_KEY_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          storeFile=upload-keystore.jks
+          EOF
+
       - name: Build AAB (obfuscated + symbols)
         working-directory: app
         run: |
