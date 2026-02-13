@@ -1,0 +1,64 @@
+{
+  "project_info": {
+    "project_number": "442218050266",
+    "project_id": "news-caebd",
+    "storage_bucket": "news-caebd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:442218050266:android:2b803c2666195ccd262be3",
+        "android_client_info": {
+          "package_name": "com.anmt2805.news_crawl"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "442218050266-1nh43h994hosn3435o4v937155ffk00p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.anmt2805.news_crawl",
+            "certificate_hash": "a19e5d9673009427ce6dda45750d998ae7017d2e"
+          }
+        },
+        {
+          "client_id": "442218050266-1pqm8gppcsorh2e8ooa7rql8kqbk1608.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.anmt2805.news_crawl",
+            "certificate_hash": "45b193b3b898f82f21455dc99bc0566c1c9daa9a"
+          }
+        },
+        {
+          "client_id": "442218050266-5rhv26tlhmeaum75l9o5l8046smab19l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.anmt2805.news_crawl",
+            "certificate_hash": "3d332b7f7812e71e65bf3a37642f00463f3a46c9"
+          }
+        },
+        {
+          "client_id": "442218050266-7t8egh8fpn4jvq1vhqs1kn8bdlhmocro.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBu9ey0gWGM5dTetOxGJukDtIpQYRMK3DA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "442218050266-7t8egh8fpn4jvq1vhqs1kn8bdlhmocro.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      },
+      "admob_app_id": "ca-app-pub-4338188988925499~6042947906"
+    }
+  ],
+  "configuration_version": "1"
+}

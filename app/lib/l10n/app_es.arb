@@ -1,0 +1,353 @@
+{
+  "@@locale": "es",
+  "tokensLabel": "Tokens : {count}",
+  "@tokensLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "breakingTab": "Últimas",
+  "breakingTabShort": "Últimas",
+  "topBreakingHeadlines": "Últimas noticias · {region}",
+  "@topBreakingHeadlines": {
+    "placeholders": {
+      "region": {
+        "type": "String"
+      }
+    }
+  },
+  "tapTitleToEditKeyword": "Toca el título para editar la palabra clave",
+  "noKeywordSet": "No hay palabra clave en esta pestaña.",
+  "setKeyword": "Configurar palabra clave",
+  "setKeywordForTab": "Configurar palabra clave para {tab}",
+  "@setKeywordForTab": {
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
+  },
+  "keywordHint": "ej.: IA, clima, bitcoin",
+  "cancel": "Cancelar",
+  "save": "Guardar",
+  "breakingNewsFixed": "Breaking news es fijo.",
+  "fixedLabel": "Fijo: {label}",
+  "@fixedLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "noKeyword": "Sin palabra clave",
+  "regionFilter": "Filtro de región",
+  "refresh": "Actualizar",
+  "toggleTheme": "Cambiar tema",
+  "regionSettingsTitle": "Región del artículo",
+  "languageSettingsTitle": "Idioma de la app",
+  "languageEnglish": "Inglés",
+  "languageEnglishUk": "Inglés (UK)",
+  "languageKorean": "Coreano",
+  "languageJapanese": "Japonés",
+  "languageFrench": "Francés",
+  "languageSpanish": "Español",
+  "languageRussian": "Ruso",
+  "languageArabic": "Árabe",
+  "notificationSettingsTitle": "Ajustes de notificaciones",
+  "notificationsTitle": "Notificaciones",
+  "notificationsClear": "Borrar todo",
+  "notificationsEmpty": "No hay notificaciones.",
+  "notificationsSeverity": "Gravedad",
+  "regionUnitedStates": "Estados Unidos",
+  "regionUnitedKingdom": "Reino Unido",
+  "regionKorea": "Corea del Sur",
+  "regionJapan": "Japón",
+  "regionFrance": "Francia",
+  "regionSpain": "España",
+  "regionRussia": "Rusia",
+  "regionUnitedArabEmirates": "Emiratos Árabes Unidos",
+  "regionAllCountries": "Todos los países",
+  "syncChoiceTitle": "Elegir datos",
+  "syncChoiceBody": "Hay datos guardados en tu cuenta. ¿Qué datos quieres usar?",
+  "syncChoiceUseCloud": "Usar datos de la cuenta",
+  "syncChoiceKeepLocal": "Mantener este dispositivo",
+  "notificationBreakingTitle": "Alertas urgentes",
+  "notificationBreakingSubtitle": "Solo crítico (nivel 5)",
+  "notificationKeywordTitle": "Alertas por palabra clave",
+  "notificationSeverity4": "Nivel 4",
+  "notificationSeverity5": "Nivel 5",
+  "notificationSeverity4Label": "Grave",
+  "notificationSeverity5Label": "Muy grave",
+  "exitConfirmTitle": "¿Salir de la app?",
+  "exitConfirmBody": "¿Quieres cerrar la app?",
+  "exitConfirmNo": "No",
+  "exitConfirmYes": "Sí",
+  "loginRequiredTitle": "Se requiere iniciar sesión",
+  "loginRequiredBody": "Inicia sesión para comprar pestañas o tokens.",
+  "loginFailedTitle": "Error de inicio de sesión",
+  "loginFailedBody": "Falló el inicio de sesión con Google. Inténtalo de nuevo.",
+  "purchaseLockedTitle": "Desbloqueo en orden",
+  "purchaseLockedBody": "Primero desbloquea la pestaña anterior.",
+  "insufficientTokensTitle": "Tokens insuficientes",
+  "insufficientTokensBody": "Necesitas más tokens para comprar esta pestaña.",
+  "openTokenStore": "Abrir tienda de tokens",
+  "noThanks": "No",
+  "confirm": "OK",
+  "confirmPurchase": "Comprar",
+  "purchaseTabTitle": "Comprar pestaña {tab}",
+  "@purchaseTabTitle": {
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
+  },
+  "purchaseTabBody": "{cost} tokens por 30 días. ¿Continuar?",
+  "@purchaseTabBody": {
+    "placeholders": {
+      "cost": {
+        "type": "int"
+      }
+    }
+  },
+  "tabPurchaseLedger": "Compra pestaña {tab}",
+  "@tabPurchaseLedger": {
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
+  },
+  "tokenPurchaseLedger": "Compra de tokens +{count} ({price})",
+  "@tokenPurchaseLedger": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "tokensBalanceLabel": "Saldo: {count}",
+  "@tokensBalanceLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tabUsageTitle": "Uso de pestañas",
+  "tabLabelWithIndex": "Pestaña {label}",
+  "@tabLabelWithIndex": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "tabRemainingLabel": "Restante {time}",
+  "@tabRemainingLabel": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "tabLockedLabel": "Bloqueada",
+  "tokenHistoryTitle": "Historial de tokens",
+  "notSignedIn": "No has iniciado sesión",
+  "signOut": "Cerrar sesión",
+  "noArticlesFound": "Se actualiza automáticamente a intervalos regulares.",
+  "failedToLoadNews": "No se pudieron cargar las noticias.",
+  "summaryUnavailable": "Resumen no disponible.",
+  "failedToLoadArticle": "No se pudo cargar el artículo.",
+  "noArticleContent": "No hay contenido del artículo.",
+  "translationOn": "Traducción activada",
+  "originalOn": "Original activado",
+  "contentUnavailable": "Contenido no disponible.",
+  "translateFullArticle": "Traducir artículo completo",
+  "translating": "Traduciendo...",
+  "openOriginal": "Abrir original",
+  "openOriginalArticle": "Abrir artículo original",
+  "summarySettingsTitle": "Configuración del resumen",
+  "summaryLengthLabel": "Longitud del resumen",
+  "summaryShort": "Corto",
+  "summaryMedium": "Medio",
+  "summaryLong": "Largo",
+  "summaryFull": "Texto completo (sin resumen)",
+  "summarySave": "Guardar",
+  "summaryLimitedNotice": "Este artículo no se puede ver completo en la app. Abre el enlace de abajo para leerlo.",
+  "translationLongContentNotice": "El texto original es demasiado largo. Se muestra un resumen traducido.",
+  "urgentBadge": "Urgente",
+  "translatingBadge": "Procesando con IA",
+  "processingEtaMinutes": "aprox. {minutes} min",
+  "@processingEtaMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "signInWithGoogle": "Iniciar sesión con Google",
+  "tapToConnectAccount": "Toca abajo para conectar tu cuenta.",
+  "googleAccount": "Cuenta de Google",
+  "connectSync": "Sincroniza palabras clave y tokens entre dispositivos.",
+  "continueWithGoogle": "Continuar con Google",
+  "tokensStore": "Tienda de tokens",
+  "reportArticle": "Reportar este artículo",
+  "blockSource": "Bloquear este medio",
+  "blockedSourceToast": "Se bloqueó este medio.",
+  "blockedSourcesTitle": "Fuentes bloqueadas",
+  "blockedSourcesEmpty": "No hay fuentes bloqueadas.",
+  "unblockSource": "Desbloquear",
+  "unblockedSourceToast": "Fuente desbloqueada.",
+  "reportedArticleToast": "El reporte fue enviado.",
+  "tokenPackLabel": "{count} tokens",
+  "@tokenPackLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "perTokenPrice": "{price} por token",
+  "@perTokenPrice": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "language": "Idioma",
+  "retry": "Reintentar",
+  "settingsTitle": "Configuración",
+  "settingsAppearanceTitle": "Apariencia",
+  "contactSupport": "Contactar soporte",
+  "reviewPromptTitle": "¿Te gusta SCOOP?",
+  "reviewPromptBody": "¿Qué calificación le das a la app?",
+  "reviewPromptLater": "Más tarde",
+  "reviewPromptContinue": "Continuar",
+  "reviewHighTitle": "¡Gracias!",
+  "reviewHighBody": "¿Quieres dejar una reseña en la tienda?",
+  "reviewWriteAction": "Escribir reseña",
+  "reviewLowTitle": "Enviar comentarios",
+  "reviewLowBody": "Cuéntanos qué podemos mejorar.",
+  "bannedTitle": "Cuenta suspendida",
+  "bannedBody": "Esta cuenta ha sido suspendida. Si crees que es un error, contacta con soporte.",
+  "developerEmailTitle": "Correo del desarrollador",
+  "savedArticlesTitle": "Artículos guardados",
+  "savedArticlesEmpty": "No hay artículos guardados.",
+  "saveArticle": "Guardar",
+  "removeSaved": "Quitar",
+  "autoRenewTitle": "Renovación automática",
+  "autoRenewSubtitle": "Cobrar 2 tokens 1 hora antes del vencimiento",
+  "ledgerPurchase": "Recarga de tokens",
+  "ledgerSpend": "Compra de pestaña",
+  "ledgerAutoRenew": "Renovación automática",
+  "ledgerSpendWithTab": "Compra de pestaña · {tab}",
+  "@ledgerSpendWithTab": {
+    "placeholders": {
+      "tab": {}
+    }
+  },
+  "ledgerAutoRenewWithTab": "Renovación automática · {tab}",
+  "@ledgerAutoRenewWithTab": {
+    "placeholders": {
+      "tab": {}
+    }
+  },
+  "autoRenewConfirmTitle": "¿Activar renovación automática?",
+  "autoRenewConfirmBody": "Cobraremos 2 tokens 1 hora antes del vencimiento para mantener las pestañas activas.",
+  "autoRenewConfirmEnable": "Activar",
+  "autoRenewFailedTitle": "Fallo de renovación automática",
+  "autoRenewFailedBody": "La renovación automática falló por falta de tokens.",
+  "autoRenewSuccessTitle": "Auto renewal success",
+  "autoRenewSuccessBody": "{count} tabs renewed for 30 more days.",
+  "@autoRenewSuccessBody": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "autoRenewSuccessTabsBody": "{tabs} auto renewal succeeded and extended 30 days.",
+  "@autoRenewSuccessTabsBody": {
+    "placeholders": {
+      "tabs": {}
+    }
+  },
+  "shareArticle": "Compartir",
+  "shareSheetTitle": "Compartir noticia",
+  "shareSheetShare": "Compartir con app",
+  "shareSheetCopy": "Copiar",
+  "shareCopiedToast": "Copiado al portapapeles.",
+  "shareMessage": "¿Viste esta noticia?\n{title}\n{url}\n\n⚡ Las noticias clave del mundo, más rápido con traducción y resúmenes IA en «SCOOP».",
+  "@shareMessage": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "rateLimitToast": "Demasiadas solicitudes de actualización. Intenta de nuevo en {seconds}s.",
+  "@rateLimitToast": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "tokenStoreSubscriptionNote": "Suscríbete a al menos una pestaña de pago para traducciones ilimitadas sin anuncios.",
+  "subscribeTabPromptTitle": "¿Suscribirse a esta pestaña de palabras clave?",
+  "insufficientTokensPromptTitle": "No hay suficientes tokens",
+  "insufficientTokensPromptBody": "¿Ir a la tienda de tokens?",
+  "bannerSponsored": "Patrocinado",
+  "bannerHeadline": "Descubre beneficios de noticias personalizados",
+  "bannerAdLabel": "Anuncio",
+  "freeTranslationTitle": "Traducciones gratuitas",
+  "freeTranslationUsage": "Has usado {used} traducciones gratuitas; te quedan {remaining} hoy.",
+  "@freeTranslationUsage": {
+    "placeholders": {
+      "used": {
+        "type": "int"
+      },
+      "remaining": {
+        "type": "int"
+      }
+    }
+  },
+  "freeTranslationRemaining": "Te quedan {count} traducciones gratuitas hoy.",
+  "@freeTranslationRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "freeTranslationExhausted": "Has usado todas las traducciones gratuitas de hoy.",
+  "translationAdTitle": "Anuncio",
+  "translationAdBody": "Se mostrará un anuncio.",
+  "onboardingTitle1": "Todas las noticias del mundo en tu mano",
+  "onboardingBody1": "Registra tus palabras clave.\nConsulta noticias principales de EE. UU., Reino Unido, Japón y más en tiempo real.",
+  "onboardingTitle2": "¿Sin tiempo? No pasa nada",
+  "onboardingBody2": "La IA resume artículos largos en 3 líneas y traduce noticias internacionales a tu idioma.",
+  "onboardingTitle3": "Suscríbete a tus intereses",
+  "onboardingBody3": "Acumula tokens para abrir más pestañas.\nBitcoin, IA… crea tu propio feed de noticias.",
+  "onboardingSkip": "Saltar",
+  "onboardingNext": "Siguiente",
+  "onboardingDone": "Empezar",
+  "privacyPolicyTitle": "Política de privacidad",
+  "privacyPolicyButton": "Política de privacidad / Condiciones de reembolso",
+  "accountDeletionTitle": "Eliminar cuenta",
+  "privacyConsentTitle": "Consentimiento de privacidad",
+  "privacyConsentBody": "Para usar la app, debes aceptar los elementos obligatorios a continuación.",
+  "privacyConsentRequiredHint": "Marca todos los elementos obligatorios para continuar.",
+  "privacyConsentPolicyLabel": "[Obligatorio] Aceptar la política de privacidad",
+  "privacyConsentOverseasLabel": "[Obligatorio] Aceptar la transferencia internacional de datos (Google/Firebase/AdMob)",
+  "privacyConsentDecline": "Rechazar",
+  "privacyConsentAccept": "Aceptar"
+}

@@ -1,0 +1,91 @@
+Politique de confidentialité de SCOOP
+Cette Politique de confidentialité s’applique à l’application mobile SCOOP (l’« Application ») fournie par Guroom (le « Fournisseur de service »). L’Application est fournie « EN L’ÉTAT » (« AS IS »).
+• Date d’entrée en vigueur : 2026-01-25
+• Dernière mise à jour : 2026-02-07
+1. Informations collectées
+Nous pouvons collecter et traiter les informations suivantes afin de fournir et d’exploiter l’Application.
+1) Informations que vous fournissez (facultatif)
+• (Facultatif) Si vous utilisez la connexion Google : identifiants de compte (ex. Firebase UID), pseudonyme, etc.
+• Si vous nous contactez : adresse e-mail et contenu de votre demande (informations fournies volontairement)
+Remarque : l’Application peut être utilisée sans connexion. La connexion Google est facultative.
+2) Informations collectées automatiquement
+• Informations sur l’appareil : système d’exploitation (OS), version de l’application, paramètres de langue, identifiants de l’appareil (y compris l’identifiant publicitaire le cas échéant)
+• Données d’utilisation : écrans/pages consultés, horodatages, durée d’utilisation, journaux d’interaction
+• Informations réseau : adresse IP et données de connexion associées
+3) Informations que nous ne collectons pas
+Nous ne collectons pas de données de localisation précise (Precise Location).
+Nous ne collectons ni ne traitons de texte privé de l’utilisateur (p. ex. notes personnelles/chats) à des fins d’IA.
+2. Utilisation des informations
+Nous utilisons les informations uniquement pour :
+1) fournir et exploiter le service (diffusion de contenu, enregistrement des paramètres)
+2) améliorer la stabilité et les performances (analyses et diagnostic des plantages)
+3) sécurité et prévention de la fraude/des abus
+4) support client et notifications essentielles
+5) traiter les achats et fournir le contenu payant (tokens/abonnements)
+Nous n’envoyons pas de notifications push marketing ou promotionnelles.
+3. Services tiers
+L’Application peut utiliser des services tiers qui traitent les données conformément à leurs propres politiques, notamment :
+• Google Play Services
+• Google Firebase (Analytics, Crashlytics, Authentication/Firestore, etc.)
+• Google AdMob (publicités et vérification des récompenses)
+4. Paiements
+Nous pouvons proposer des produits et/ou services payants (p. ex. tokens, abonnements). Les paiements sont traités via la boutique d’applications (p. ex. Google Play).
+Nous ne stockons ni ne collectons les informations de carte de paiement.
+Nous pouvons conserver des données liées à la transaction (ID de transaction, date d’achat, type de produit, jeton de vérification d’achat) uniquement pour gérer l’historique des achats et délivrer le contenu acheté.
+5. Publicités et vérification des récompenses (AdMob)
+Nous pouvons proposer des publicités avec récompense. Pour valider les récompenses et prévenir la fraude/la duplication, nous pouvons traiter des données de transaction publicitaire (p. ex. transaction_id, custom_data). Ces données sont utilisées uniquement pour la vérification et l’attribution des récompenses.
+6. Fonctionnalités d’IA
+Nous pouvons utiliser des fonctionnalités d’IA (p. ex. résumé/traduction/classification) afin d’améliorer l’expérience utilisateur.
+Données traitées : texte du contenu (titres/résumés) et paramètres minimaux (langue/mots-clés) nécessaires à la fonctionnalité.
+Nous n’utilisons pas de texte privé de l’utilisateur (notes/chats) pour le traitement par IA.
+7. Conservation des données
+Nous conservons les données personnelles uniquement le temps nécessaire à la fourniture du service et pendant une période raisonnable ensuite, sauf si une durée plus longue est exigée par la loi (p. ex. historique des transactions pour la gestion des litiges).
+Vous pouvez demander la suppression en nous contactant.
+8. Vos droits
+Vous pouvez demander l’accès, la rectification, la suppression, la limitation du traitement ou le retrait du consentement (le cas échéant) en nous contactant :
+E-mail : anmt2805@gmail.com
+Vous pouvez également arrêter toute collecte future en désinstallant l’Application.
+9. Transferts internationaux de données
+Nous pouvons transférer, stocker et traiter des informations sur des serveurs situés en dehors de votre pays (p. ex. via Google Firebase/AdMob), y compris aux États-Unis et dans d’autres régions où opèrent les prestataires.
+• Destinataire : Google LLC et ses filiales/opérateurs de service
+• Finalité : exploitation du service, analyses, diagnostic des plantages, diffusion de publicités et vérification des récompenses
+• Catégories de données : données minimales d’appareil/d’usage, identifiants publicitaires (le cas échéant), données de connexion
+• Conservation : selon les besoins pour les finalités décrites ou conformément aux lois/politiques applicables
+Si le transfert international est essentiel à la fourniture du service, un refus peut limiter les fonctionnalités de l’Application.
+10. Enfants
+L’Application n’est pas destinée aux enfants de moins de 13 ans et nous ne collectons pas sciemment d’informations personnelles les concernant. Si nous en prenons connaissance, nous les supprimerons.
+11. Sécurité
+Nous appliquons des mesures de protection raisonnables, notamment des contrôles d’accès et des pratiques de sécurité adaptées au service.
+12. Modifications
+Nous pouvons mettre à jour cette Politique de confidentialité. Les modifications seront publiées sur cette page ou dans l’Application. L’utilisation continue après la date d’entrée en vigueur vaut acceptation de la version mise à jour.
+13. Contact
+E-mail : anmt2805@gmail.com
+14. Conditions d’utilisation et politique des services payants
+Article 1 (Achat et utilisation des tokens)
+1. Les utilisateurs peuvent acheter la monnaie virtuelle payante « tokens » via les achats intégrés Google.
+2. Deux tokens achetés peuvent être utilisés pour activer l’accès à [nom de la fonctionnalité/onglet spécifique] pendant 30 jours.
+3. À l’issue des 30 jours, l’accès expire automatiquement. Pour continuer à l’utiliser, l’utilisateur doit le réactiver avec des tokens.
+Article 2 (Rétractation et politique de remboursement)
+L’application respecte la législation applicable et les remboursements sont régis comme suit.
+1. Cas remboursables
+- Les tokens non utilisés peuvent être remboursés si la demande est faite dans les 7 jours suivant l’achat.
+- En cas de défaut majeur de l’application empêchant l’utilisation normale du service.
+2. Cas non remboursables
+- Si des tokens achetés ont été utilisés pour activer (ouvrir) du contenu : cela est considéré comme le début de la fourniture de contenu numérique, et les remboursements pour changement d’avis sont limités.
+- Tokens achetés depuis plus de 7 jours ou tokens gratuits attribués lors d’événements, etc.
+Article 3 (Sanctions contre les remboursements frauduleux et les abus)
+Pour un fonctionnement sain du service, la société interdit strictement les actes suivants.
+1. Définition de l’usage frauduleux : demander des remboursements de manière répétée en abusant des fonctions du store (Google Play) après avoir déjà utilisé le service, sans passer par la procédure légitime du service client dans l’application.
+2. Mesures de restriction : si un usage frauduleux est détecté, la société peut, sans préavis, prendre les mesures suivantes.
+- Récupération de la monnaie et suspension de l’accès : déduire les tokens correspondant au montant remboursé et annuler immédiatement l’accès activé.
+- Restriction de compte (Ban) : suspension permanente du service pour les comptes dont l’historique de remboursements frauduleux est confirmé et limitation des nouvelles inscriptions.
+3. Action légale : en cas de dommages causés par des abus de remboursement malveillants, la société peut demander une indemnisation.
+Article 4 (Procédure de remboursement et contestation)
+1. Tous les paiements suivent en priorité les politiques du Google Play Store.
+2. Si un utilisateur dont le compte a été suspendu pour usage frauduleux souhaite contester, il peut déposer une réclamation auprès du support officiel en joignant le reçu d’achat et les raisons.
+Liens tiers
+Google Privacy Policy: https://policies.google.com/privacy
+Google Play Services: https://policies.google.com/privacy
+AdMob: https://support.google.com/admob/answer/6128543
+Google Analytics for Firebase: https://firebase.google.com/policies/analytics
+Firebase Crashlytics: https://firebase.google.com/support/privacy

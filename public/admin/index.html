@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1"
+    />
+    <title>News Admin Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow" data-i18n="eyebrow">News Crawl</p>
+          <h1 data-i18n="title">Admin Console</h1>
+        </div>
+        <div class="session">
+          <label class="lang-select">
+            <span data-i18n="languageLabel">Language</span>
+            <select id="languageSelect">
+              <option value="en">English</option>
+              <option value="ko">한국어</option>
+            </select>
+          </label>
+          <span id="sessionEmail" class="session-email"></span>
+          <button id="logoutBtn" class="btn ghost" type="button" hidden data-i18n="logout">
+            Log out
+          </button>
+        </div>
+      </header>
+
+      <section class="card">
+        <h2 data-i18n="connectionTitle">Connection</h2>
+        <div class="form-grid">
+          <label>
+            <span data-i18n="apiBaseLabel">API Base URL</span>
+            <input
+              id="apiBaseUrl"
+              type="url"
+              placeholder="https://news-crawl-server-...run.app"
+            />
+          </label>
+          <button id="reloadBtn" class="btn" type="button" disabled data-i18n="reloadData">
+            Reload Data
+          </button>
+        </div>
+        <p class="hint" data-i18n="corsHint">
+          Ensure CORS allows this hosting domain to call the server API.
+        </p>
+      </section>
+
+      <section id="loginCard" class="card">
+        <h2 data-i18n="loginTitle">Admin Sign-in</h2>
+        <form id="loginForm" class="form-grid">
+          <label>
+            <span data-i18n="emailLabel">Email</span>
+            <input id="loginEmail" type="email" required />
+          </label>
+          <label>
+            <span data-i18n="passwordLabel">Password</span>
+            <input id="loginPassword" type="password" required />
+          </label>
+          <button class="btn" type="submit" data-i18n="loginAction">Sign in</button>
+        </form>
+        <div class="divider">
+          <span data-i18n="or">or</span>
+        </div>
+        <button id="googleLoginBtn" class="btn ghost" type="button" data-i18n="loginGoogle">
+          Sign in with Google
+        </button>
+        <p id="loginMessage" class="message"></p>
+      </section>
+
+      <section id="dashboard" class="dashboard" hidden>
+        <nav class="dash-nav" aria-label="Dashboard">
+          <a class="nav-pill" href="#section-metrics" data-i18n="navMetrics">Metrics</a>
+          <a class="nav-pill" href="#section-negative" data-i18n="navNegative">Negative</a>
+          <a class="nav-pill" href="#section-crawl" data-i18n="navCrawl">Crawl</a>
+          <a class="nav-pill" href="#section-maintenance" data-i18n="navMaintenance">Maintenance</a>
+          <a class="nav-pill" href="#section-sources" data-i18n="navSources">Sources</a>
+          <a class="nav-pill" href="#section-keywords" data-i18n="navKeywords">Keywords</a>
+          <a class="nav-pill" href="#section-tabs" data-i18n="navTabs">Tabs</a>
+          <a class="nav-pill" href="#section-push" data-i18n="navPush">Push</a>
+        </nav>
+
+        <div class="grid two">
+          <section id="section-metrics" class="card">
+            <h2 data-i18n="metricsTitle">Metrics</h2>
+            <div id="metrics" class="metrics"></div>
+          </section>
+          <section class="card" aria-label="Tokens">
+            <h2 data-i18n="grantTitle">Grant Tokens</h2>
+            <form id="grantForm" class="form-grid">
+              <label>
+                <span data-i18n="uidLabel">User UID</span>
+                <input id="grantUid" type="text" required />
+              </label>
+              <label>
+                <span data-i18n="tokensLabel">Tokens</span>
+                <input id="grantTokens" type="number" min="1" required />
+              </label>
+              <label>
+                <span data-i18n="reasonLabel">Reason (optional)</span>
+                <input id="grantReason" type="text" />
+              </label>
+              <button class="btn" type="submit" data-i18n="grantAction">Grant</button>
+            </form>
+            <p id="grantMessage" class="message"></p>
+            <div class="divider">
+              <span data-i18n="or">or</span>
+            </div>
+            <form id="deductForm" class="form-grid">
+              <label>
+                <span data-i18n="uidLabel">User UID</span>
+                <input id="deductUid" type="text" required />
+              </label>
+              <label>
+                <span data-i18n="tokensLabel">Tokens</span>
+                <input id="deductTokens" type="number" min="1" required />
+              </label>
+              <label>
+                <span data-i18n="reasonLabel">Reason (optional)</span>
+                <input id="deductReason" type="text" />
+              </label>
+              <button class="btn" type="submit" data-i18n="deductAction">Deduct</button>
+            </form>
+            <p id="deductMessage" class="message"></p>
+          </section>
+        </div>
+
+        <section id="section-negative" class="card">
+          <h2 data-i18n="negativeUsersTitle">Negative Token Balances</h2>
+          <p class="hint" data-i18n="negativeUsersHint">
+            Users whose token balance dropped below zero.
+          </p>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th data-i18n="negativeHeaderUid">User UID</th>
+                  <th data-i18n="negativeHeaderBalance">Balance</th>
+                  <th data-i18n="negativeHeaderBanned">Banned</th>
+                  <th data-i18n="negativeHeaderUpdated">Updated</th>
+                  <th data-i18n="negativeHeaderAction">Action</th>
+                </tr>
+              </thead>
+              <tbody id="negativeUsersBody"></tbody>
+            </table>
+          </div>
+          <p id="negativeUsersMessage" class="message"></p>
+        </section>
+
+        <section id="section-push" class="card">
+          <h2 data-i18n="pushTitle">Push Notifications</h2>
+          <p class="hint" data-i18n="pushHint">
+            Send a manual push to all users (with active tokens) or one specific user.
+          </p>
+          <form id="pushForm" class="form-grid">
+            <label>
+              <span data-i18n="pushTargetLabel">Target</span>
+              <select id="pushScope">
+                <option value="all" data-i18n="pushTargetAll">All users</option>
+                <option value="user" data-i18n="pushTargetUser">Specific user</option>
+              </select>
+            </label>
+            <label id="pushUidRow" hidden>
+              <span data-i18n="uidLabel">User UID</span>
+              <input id="pushUid" type="text" />
+            </label>
+            <label>
+              <span data-i18n="pushTitleLabel">Title</span>
+              <input id="pushTitle" type="text" maxlength="120" required />
+            </label>
+            <label>
+              <span data-i18n="pushInputLangLabel">Input Language</span>
+              <select id="pushInputLang">
+                <option value="ko">한국어</option>
+                <option value="en">English</option>
+                <option value="ja">日本語</option>
+                <option value="fr">Français</option>
+                <option value="es">Español</option>
+                <option value="ru">Русский</option>
+                <option value="ar">العربية</option>
+              </select>
+            </label>
+            <label>
+              <span data-i18n="pushBodyLabel">Body</span>
+              <textarea id="pushBody" rows="3" maxlength="600" required></textarea>
+            </label>
+            <label>
+              <span data-i18n="pushDataLabel">Data JSON (optional)</span>
+              <textarea
+                id="pushDataJson"
+                rows="3"
+                placeholder='{"url":"https://example.com/news"}'
+              ></textarea>
+            </label>
+            <button class="btn" type="submit" data-i18n="pushSendAction">Send Push</button>
+          </form>
+          <p id="pushMessage" class="message"></p>
+        </section>
+
+        <section id="section-crawl" class="card">
+          <h2 data-i18n="crawlSourcesTitle">Crawl Sources</h2>
+          <p class="hint" data-i18n="crawlSourcesHint">
+            Only checked sources will be crawled.
+          </p>
+          <div class="toggle-list">
+            <label class="toggle">
+              <input id="toggleGoogleNews" type="checkbox" />
+              <span data-i18n="crawlGoogleNews">Google News</span>
+            </label>
+            <label class="toggle">
+              <input id="toggleNaver" type="checkbox" />
+              <span data-i18n="crawlNaver">Naver</span>
+            </label>
+            <label class="toggle">
+              <input id="toggleGdelt" type="checkbox" />
+              <span data-i18n="crawlGdelt">GDELT</span>
+            </label>
+          </div>
+          <div class="form-grid">
+            <button id="saveCrawlSourcesBtn" class="btn" type="button" data-i18n="crawlSourcesSave">
+              Save
+            </button>
+            <p id="crawlSourcesMessage" class="message"></p>
+          </div>
+          <p id="crawlSourcesEffective" class="hint"></p>
+        </section>
+
+        <section id="section-maintenance" class="card">
+          <h2 data-i18n="maintenanceTitle">Maintenance Mode</h2>
+          <p class="hint" data-i18n="maintenanceHint">
+            Schedule a maintenance window. Users will see a blocking notice during
+            the active period.
+          </p>
+          <div class="toggle-list">
+            <label class="toggle">
+              <input id="maintenanceEnabled" type="checkbox" />
+              <span data-i18n="maintenanceEnabledLabel">Enable Maintenance</span>
+            </label>
+          </div>
+          <form class="form-grid">
+            <label>
+              <span data-i18n="maintenanceStartLabel">Start (Local)</span>
+              <input id="maintenanceStartAt" type="datetime-local" />
+            </label>
+            <label>
+              <span data-i18n="maintenanceEndLabel">End (Local)</span>
+              <input id="maintenanceEndAt" type="datetime-local" />
+            </label>
+            <label>
+              <span data-i18n="maintenanceStoreAndroidLabel">Android Store URL</span>
+              <input
+                id="maintenanceStoreAndroid"
+                type="url"
+                placeholder="https://play.google.com/store/apps/details?id=..."
+              />
+            </label>
+            <label>
+              <span data-i18n="maintenanceStoreIosLabel">iOS Store URL</span>
+              <input
+                id="maintenanceStoreIos"
+                type="url"
+                placeholder="https://apps.apple.com/app/..."
+              />
+            </label>
+          </form>
+          <div class="form-grid">
+            <button id="saveMaintenanceBtn" class="btn" type="button" data-i18n="maintenanceSave">
+              Save
+            </button>
+            <p id="maintenanceMessage" class="message"></p>
+          </div>
+          <p id="maintenanceEffective" class="hint"></p>
+        </section>
+
+        <section id="section-sources" class="card">
+          <h2 data-i18n="sourcesTitle">Sources with Reports</h2>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th data-i18n="sourceHeader">Source</th>
+                  <th data-i18n="reportsHeader">Reports</th>
+                  <th data-i18n="blocksHeader">Blocks</th>
+                  <th data-i18n="deniedHeader">Denied</th>
+                  <th data-i18n="updatedHeader">Updated</th>
+                  <th data-i18n="actionHeader">Action</th>
+                </tr>
+              </thead>
+              <tbody id="sourcesBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="section-keywords" class="card">
+          <h2 data-i18n="keywordsTitle">Top Keywords (Subscriptions)</h2>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th data-i18n="rankHeader">Rank</th>
+                  <th data-i18n="keywordHeader">Keyword</th>
+                  <th data-i18n="countHeader">Count</th>
+                </tr>
+              </thead>
+              <tbody id="keywordsBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="section-tabs" class="card">
+          <h2 data-i18n="tabsTitle">Tab Management</h2>
+          <form id="tabLookupForm" class="form-grid">
+            <label>
+              <span data-i18n="uidLabel">User UID</span>
+              <input id="tabLookupUid" type="text" required />
+            </label>
+            <label>
+              <span data-i18n="tabIndexLabel">Tab Index (2-6)</span>
+              <input id="tabLookupIndex" type="number" min="2" max="6" required />
+            </label>
+            <button class="btn" type="submit" data-i18n="lookupAction">Lookup</button>
+          </form>
+          <p id="tabLookupMessage" class="message"></p>
+          <form id="tabSetForm" class="form-grid">
+            <label>
+              <span data-i18n="uidLabel">User UID</span>
+              <input id="tabSetUid" type="text" required />
+            </label>
+            <label>
+              <span data-i18n="tabIndexLabel">Tab Index (2-6)</span>
+              <input id="tabSetIndex" type="number" min="2" max="6" required />
+            </label>
+            <label>
+              <span data-i18n="remainingHoursLabel">Remaining Hours</span>
+              <input id="tabSetHours" type="number" min="1" />
+            </label>
+            <label>
+              <span data-i18n="remainingMinutesLabel">Remaining Minutes</span>
+              <input id="tabSetMinutes" type="number" min="1" />
+            </label>
+            <button class="btn" type="submit" data-i18n="setTabAction">Set Remaining</button>
+          </form>
+          <p id="tabSetMessage" class="message"></p>
+        </section>
+      </section>
+
+      <footer class="app-footer">
+        <span id="statusMessage">Idle</span>
+      </footer>
+    </div>
+
+    <script type="module" src="./admin.js"></script>
+  </body>
+</html>

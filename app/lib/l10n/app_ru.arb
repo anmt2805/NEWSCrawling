@@ -1,0 +1,353 @@
+{
+  "@@locale": "ru",
+  "tokensLabel": "Токены : {count}",
+  "@tokensLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "breakingTab": "Срочно",
+  "breakingTabShort": "Срочно",
+  "topBreakingHeadlines": "Главные новости · {region}",
+  "@topBreakingHeadlines": {
+    "placeholders": {
+      "region": {
+        "type": "String"
+      }
+    }
+  },
+  "tapTitleToEditKeyword": "Нажмите заголовок, чтобы изменить ключевое слово",
+  "noKeywordSet": "Для этой вкладки не задано ключевое слово.",
+  "setKeyword": "Задать ключевое слово",
+  "setKeywordForTab": "Задать ключевое слово для {tab}",
+  "@setKeywordForTab": {
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
+  },
+  "keywordHint": "например: AI, климат, биткоин",
+  "cancel": "Отмена",
+  "save": "Сохранить",
+  "breakingNewsFixed": "Breaking news фиксирован.",
+  "fixedLabel": "Фиксировано: {label}",
+  "@fixedLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "noKeyword": "Нет ключевого слова",
+  "regionFilter": "Фильтр региона",
+  "refresh": "Обновить",
+  "toggleTheme": "Переключить тему",
+  "regionSettingsTitle": "Регион статьи",
+  "languageSettingsTitle": "Язык приложения",
+  "languageEnglish": "Английский",
+  "languageEnglishUk": "Английский (Великобритания)",
+  "languageKorean": "Корейский",
+  "languageJapanese": "Японский",
+  "languageFrench": "Французский",
+  "languageSpanish": "Испанский",
+  "languageRussian": "Русский",
+  "languageArabic": "Арабский",
+  "notificationSettingsTitle": "Настройки уведомлений",
+  "notificationsTitle": "Уведомления",
+  "notificationsClear": "Очистить все",
+  "notificationsEmpty": "Уведомлений нет.",
+  "notificationsSeverity": "Серьёзность",
+  "regionUnitedStates": "США",
+  "regionUnitedKingdom": "Великобритания",
+  "regionKorea": "Южная Корея",
+  "regionJapan": "Япония",
+  "regionFrance": "Франция",
+  "regionSpain": "Испания",
+  "regionRussia": "Россия",
+  "regionUnitedArabEmirates": "ОАЭ",
+  "regionAllCountries": "Все страны",
+  "syncChoiceTitle": "Выбор данных",
+  "syncChoiceBody": "В аккаунте есть сохраненные данные. Какие использовать?",
+  "syncChoiceUseCloud": "Использовать данные аккаунта",
+  "syncChoiceKeepLocal": "Оставить на устройстве",
+  "notificationBreakingTitle": "Срочные оповещения",
+  "notificationBreakingSubtitle": "Только критические (уровень 5)",
+  "notificationKeywordTitle": "Уведомления по ключевым словам",
+  "notificationSeverity4": "Уровень 4",
+  "notificationSeverity5": "Уровень 5",
+  "notificationSeverity4Label": "Высокая",
+  "notificationSeverity5Label": "Критическая",
+  "exitConfirmTitle": "Выйти из приложения?",
+  "exitConfirmBody": "Закрыть приложение?",
+  "exitConfirmNo": "Нет",
+  "exitConfirmYes": "Да",
+  "loginRequiredTitle": "Требуется вход",
+  "loginRequiredBody": "Войдите, чтобы покупать вкладки или токены.",
+  "loginFailedTitle": "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0432\u043e\u0439\u0442\u0438",
+  "loginFailedBody": "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0432\u043e\u0439\u0442\u0438 \u0447\u0435\u0440\u0435\u0437 Google. \u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0435\u0449\u0451 \u0440\u0430\u0437.",
+  "purchaseLockedTitle": "Открывайте по порядку",
+  "purchaseLockedBody": "Сначала купите предыдущую вкладку.",
+  "insufficientTokensTitle": "Недостаточно токенов",
+  "insufficientTokensBody": "Пополните токены для покупки вкладки.",
+  "openTokenStore": "Открыть магазин токенов",
+  "noThanks": "Нет",
+  "confirm": "ОК",
+  "confirmPurchase": "Купить",
+  "purchaseTabTitle": "Купить вкладку {tab}",
+  "@purchaseTabTitle": {
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
+  },
+  "purchaseTabBody": "{cost} токенов на 30 дней. Продолжить?",
+  "@purchaseTabBody": {
+    "placeholders": {
+      "cost": {
+        "type": "int"
+      }
+    }
+  },
+  "tabPurchaseLedger": "Покупка вкладки {tab}",
+  "@tabPurchaseLedger": {
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
+  },
+  "tokenPurchaseLedger": "Покупка токенов +{count} ({price})",
+  "@tokenPurchaseLedger": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "tokensBalanceLabel": "Баланс: {count}",
+  "@tokensBalanceLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tabUsageTitle": "Доступ к вкладкам",
+  "tabLabelWithIndex": "Вкладка {label}",
+  "@tabLabelWithIndex": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "tabRemainingLabel": "Осталось {time}",
+  "@tabRemainingLabel": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "tabLockedLabel": "Заблокировано",
+  "tokenHistoryTitle": "История токенов",
+  "notSignedIn": "Не вошли",
+  "signOut": "Выйти",
+  "noArticlesFound": "Автоматически обновляется через регулярные интервалы.",
+  "failedToLoadNews": "Не удалось загрузить новости.",
+  "summaryUnavailable": "Резюме недоступно.",
+  "failedToLoadArticle": "Не удалось загрузить статью.",
+  "noArticleContent": "Нет содержания статьи.",
+  "translationOn": "Перевод включен",
+  "originalOn": "Оригинал включен",
+  "contentUnavailable": "Содержимое недоступно.",
+  "translateFullArticle": "Перевести статью полностью",
+  "translating": "Перевод...",
+  "openOriginal": "Открыть оригинал",
+  "openOriginalArticle": "Открыть оригинальную статью",
+  "summarySettingsTitle": "Настройки резюме",
+  "summaryLengthLabel": "Длина резюме",
+  "summaryShort": "Короткое",
+  "summaryMedium": "Среднее",
+  "summaryLong": "Длинное",
+  "summaryFull": "Полный текст (без резюме)",
+  "summarySave": "Сохранить",
+  "summaryLimitedNotice": "Эта статья не может быть полностью показана в приложении. Откройте ссылку ниже, чтобы прочитать её.",
+  "translationLongContentNotice": "Исходный текст слишком длинный. Показана переведенная сводка.",
+  "urgentBadge": "Срочно",
+  "translatingBadge": "Обработка ИИ",
+  "processingEtaMinutes": "примерно {minutes} мин",
+  "@processingEtaMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "signInWithGoogle": "Войти через Google",
+  "tapToConnectAccount": "Нажмите ниже, чтобы подключить аккаунт.",
+  "googleAccount": "Аккаунт Google",
+  "connectSync": "Синхронизация ключевых слов и токенов между устройствами.",
+  "continueWithGoogle": "Продолжить с Google",
+  "tokensStore": "Магазин токенов",
+  "reportArticle": "Пожаловаться на статью",
+  "blockSource": "Заблокировать источник",
+  "blockedSourceToast": "Источник заблокирован.",
+  "blockedSourcesTitle": "Заблокированные источники",
+  "blockedSourcesEmpty": "Заблокированных источников нет.",
+  "unblockSource": "Разблокировать",
+  "unblockedSourceToast": "Источник разблокирован.",
+  "reportedArticleToast": "Жалоба отправлена.",
+  "tokenPackLabel": "{count} токенов",
+  "@tokenPackLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "perTokenPrice": "{price} за токен",
+  "@perTokenPrice": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "language": "\u042f\u0437\u044b\u043a",
+  "retry": "\u041f\u043e\u0432\u0442\u043e\u0440\u0438\u0442\u044c",
+  "settingsTitle": "\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438",
+  "settingsAppearanceTitle": "\u0412\u043d\u0435\u0448\u043d\u0438\u0439 \u0432\u0438\u0434",
+  "contactSupport": "\u0421\u0432\u044f\u0437\u0430\u0442\u044c\u0441\u044f \u0441 \u043f\u043e\u0434\u0434\u0435\u0440\u0436\u043a\u043e\u0439",
+  "reviewPromptTitle": "\u041d\u0440\u0430\u0432\u0438\u0442\u0441\u044f SCOOP?",
+  "reviewPromptBody": "\u041a\u0430\u043a \u0431\u044b \u0432\u044b \u043e\u0446\u0435\u043d\u0438\u043b\u0438 \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0435?",
+  "reviewPromptLater": "\u041f\u043e\u0437\u0436\u0435",
+  "reviewPromptContinue": "\u0414\u0430\u043b\u0435\u0435",
+  "reviewHighTitle": "\u0421\u043f\u0430\u0441\u0438\u0431\u043e!",
+  "reviewHighBody": "\u0425\u043e\u0442\u0438\u0442\u0435 \u043e\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u043e\u0442\u0437\u044b\u0432 \u0432 \u043c\u0430\u0433\u0430\u0437\u0438\u043d\u0435?",
+  "reviewWriteAction": "\u041d\u0430\u043f\u0438\u0441\u0430\u0442\u044c \u043e\u0442\u0437\u044b\u0432",
+  "reviewLowTitle": "\u041e\u0431\u0440\u0430\u0442\u043d\u0430\u044f \u0441\u0432\u044f\u0437\u044c",
+  "reviewLowBody": "\u0420\u0430\u0441\u0441\u043a\u0430\u0436\u0438\u0442\u0435, \u0447\u0442\u043e \u043c\u043e\u0436\u043d\u043e \u0443\u043b\u0443\u0447\u0448\u0438\u0442\u044c.",
+  "bannedTitle": "\u0410\u043a\u043a\u0430\u0443\u043d\u0442 \u0437\u0430\u0431\u043b\u043e\u043a\u0438\u0440\u043e\u0432\u0430\u043d",
+  "bannedBody": "\u042d\u0442\u043e\u0442 \u0430\u043a\u043a\u0430\u0443\u043d\u0442 \u0437\u0430\u0431\u043b\u043e\u043a\u0438\u0440\u043e\u0432\u0430\u043d. \u0415\u0441\u043b\u0438 \u0432\u044b \u0441\u0447\u0438\u0442\u0430\u0435\u0442\u0435, \u0447\u0442\u043e \u044d\u0442\u043e \u043e\u0448\u0438\u0431\u043a\u0430, \u0441\u0432\u044f\u0436\u0438\u0442\u0435\u0441\u044c \u0441\u043e \u0441\u043b\u0443\u0436\u0431\u043e\u0439 \u043f\u043e\u0434\u0434\u0435\u0440\u0436\u043a\u0438.",
+  "developerEmailTitle": "Email \u0440\u0430\u0437\u0440\u0430\u0431\u043e\u0442\u0447\u0438\u043a\u0430",
+  "savedArticlesTitle": "\u0421\u043e\u0445\u0440\u0430\u043d\u0451\u043d\u043d\u044b\u0435 \u0441\u0442\u0430\u0442\u044c\u0438",
+  "savedArticlesEmpty": "\u0421\u043e\u0445\u0440\u0430\u043d\u0451\u043d\u043d\u044b\u0445 \u0441\u0442\u0430\u0442\u0435\u0439 \u043d\u0435\u0442.",
+  "saveArticle": "\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c",
+  "removeSaved": "\u0423\u0434\u0430\u043b\u0438\u0442\u044c",
+  "autoRenewTitle": "\u0410\u0432\u0442\u043e\u043f\u0440\u043e\u0434\u043b\u0435\u043d\u0438\u0435",
+  "autoRenewSubtitle": "\u0421\u043f\u0438\u0441\u044b\u0432\u0430\u0442\u044c 2 \u0442\u043e\u043a\u0435\u043d\u0430 \u0437\u0430 \u0447\u0430\u0441 \u0434\u043e \u043e\u043a\u043e\u043d\u0447\u0430\u043d\u0438\u044f",
+  "ledgerPurchase": "\u041f\u043e\u043f\u043e\u043b\u043d\u0435\u043d\u0438\u0435 \u0442\u043e\u043a\u0435\u043d\u043e\u0432",
+  "ledgerSpend": "\u041f\u043e\u043a\u0443\u043f\u043a\u0430 \u0432\u043a\u043b\u0430\u0434\u043a\u0438",
+  "ledgerAutoRenew": "\u0410\u0432\u0442\u043e\u043f\u0440\u043e\u0434\u043b\u0435\u043d\u0438\u0435",
+  "ledgerSpendWithTab": "\u041f\u043e\u043a\u0443\u043f\u043a\u0430 \u0432\u043a\u043b\u0430\u0434\u043a\u0438 \u00b7 {tab}",
+  "@ledgerSpendWithTab": {
+    "placeholders": {
+      "tab": {}
+    }
+  },
+  "ledgerAutoRenewWithTab": "\u0410\u0432\u0442\u043e\u043f\u0440\u043e\u0434\u043b\u0435\u043d\u0438\u0435 \u00b7 {tab}",
+  "@ledgerAutoRenewWithTab": {
+    "placeholders": {
+      "tab": {}
+    }
+  },
+  "autoRenewConfirmTitle": "\u0412\u043a\u043b\u044e\u0447\u0438\u0442\u044c \u0430\u0432\u0442\u043e\u043f\u0440\u043e\u0434\u043b\u0435\u043d\u0438\u0435?",
+  "autoRenewConfirmBody": "\u041c\u044b \u0441\u043f\u0438\u0448\u0435\u043c 2 \u0442\u043e\u043a\u0435\u043d\u0430 \u0437\u0430 \u0447\u0430\u0441 \u0434\u043e \u043e\u043a\u043e\u043d\u0447\u0430\u043d\u0438\u044f, \u0447\u0442\u043e\u0431\u044b \u043f\u0440\u043e\u0434\u043b\u0438\u0442\u044c \u0434\u043e\u0441\u0442\u0443\u043f.",
+  "autoRenewConfirmEnable": "\u0412\u043a\u043b\u044e\u0447\u0438\u0442\u044c",
+  "autoRenewFailedTitle": "\u0410\u0432\u0442\u043e\u043f\u0440\u043e\u0434\u043b\u0435\u043d\u0438\u0435 \u043d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c",
+  "autoRenewFailedBody": "\u0410\u0432\u0442\u043e\u043f\u0440\u043e\u0434\u043b\u0435\u043d\u0438\u0435 \u043d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0438\u0437-\u0437\u0430 \u043d\u0435\u0445\u0432\u0430\u0442\u043a\u0438 \u0442\u043e\u043a\u0435\u043d\u043e\u0432.",
+  "autoRenewSuccessTitle": "Auto renewal success",
+  "autoRenewSuccessBody": "{count} tabs renewed for 30 more days.",
+  "@autoRenewSuccessBody": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "autoRenewSuccessTabsBody": "{tabs} auto renewal succeeded and extended 30 days.",
+  "@autoRenewSuccessTabsBody": {
+    "placeholders": {
+      "tabs": {}
+    }
+  },
+  "shareArticle": "Поделиться",
+  "shareSheetTitle": "Поделиться новостью",
+  "shareSheetShare": "Поделиться через приложение",
+  "shareSheetCopy": "Копировать",
+  "shareCopiedToast": "Скопировано в буфер.",
+  "shareMessage": "Видел(а) эту новость?\n{title}\n{url}\n\n⚡ Ключевые новости мира быстрее с AI‑переводом и краткими обзорами в «SCOOP».",
+  "@shareMessage": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "rateLimitToast": "Слишком много запросов на обновление. Повторите через {seconds} c.",
+  "@rateLimitToast": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "tokenStoreSubscriptionNote": "Подпишитесь минимум на одну платную вкладку, чтобы получить неограниченный перевод без рекламы.",
+  "subscribeTabPromptTitle": "Подписаться на эту вкладку с ключевыми словами?",
+  "insufficientTokensPromptTitle": "Недостаточно токенов",
+  "insufficientTokensPromptBody": "Перейти в магазин токенов?",
+  "bannerSponsored": "Спонсировано",
+  "bannerHeadline": "Откройте персональные новости и предложения",
+  "bannerAdLabel": "Реклама",
+  "freeTranslationTitle": "Бесплатные переводы",
+  "freeTranslationUsage": "Вы использовали {used} бесплатных переводов; осталось {remaining} на сегодня.",
+  "@freeTranslationUsage": {
+    "placeholders": {
+      "used": {
+        "type": "int"
+      },
+      "remaining": {
+        "type": "int"
+      }
+    }
+  },
+  "freeTranslationRemaining": "Сегодня осталось {count} бесплатных переводов.",
+  "@freeTranslationRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "freeTranslationExhausted": "Вы использовали все бесплатные переводы на сегодня.",
+  "translationAdTitle": "Реклама",
+  "translationAdBody": "Показывается реклама.",
+  "onboardingTitle1": "Все мировые новости у вас в руке",
+  "onboardingBody1": "Добавьте интересующие ключевые слова.\nСледите за новостями США, Великобритании, Японии и других стран в реальном времени.",
+  "onboardingTitle2": "Нет времени? Не страшно",
+  "onboardingBody2": "ИИ сокращает длинные статьи до 3 строк и переводит мировые новости на ваш язык.",
+  "onboardingTitle3": "Подписывайтесь на интересы",
+  "onboardingBody3": "Собирайте токены, чтобы открыть больше вкладок.\nBitcoin, AI — создайте свою ленту новостей.",
+  "onboardingSkip": "Пропустить",
+  "onboardingNext": "Далее",
+  "onboardingDone": "Начать",
+  "privacyPolicyTitle": "Политика конфиденциальности",
+  "privacyPolicyButton": "Политика конфиденциальности / Условия возврата",
+  "accountDeletionTitle": "Удалить аккаунт",
+  "privacyConsentTitle": "Согласие на обработку данных",
+  "privacyConsentBody": "Чтобы пользоваться приложением, необходимо согласиться с обязательными пунктами ниже.",
+  "privacyConsentRequiredHint": "Отметьте все обязательные пункты, чтобы продолжить.",
+  "privacyConsentPolicyLabel": "[Обязательно] Согласие с политикой конфиденциальности",
+  "privacyConsentOverseasLabel": "[Обязательно] Согласие на международную передачу данных (Google/Firebase/AdMob)",
+  "privacyConsentDecline": "Отказаться",
+  "privacyConsentAccept": "Согласиться"
+}

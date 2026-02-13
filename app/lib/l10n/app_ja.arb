@@ -1,0 +1,353 @@
+{
+  "@@locale": "ja",
+  "tokensLabel": "トークン : {count}",
+  "@tokensLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "breakingTab": "速報",
+  "breakingTabShort": "速報",
+  "topBreakingHeadlines": "速報トップ · {region}",
+  "@topBreakingHeadlines": {
+    "placeholders": {
+      "region": {
+        "type": "String"
+      }
+    }
+  },
+  "tapTitleToEditKeyword": "タイトルをタップしてキーワードを編集",
+  "noKeywordSet": "このタブにキーワードが設定されていません。",
+  "setKeyword": "キーワードを設定",
+  "setKeywordForTab": "{tab} のキーワードを設定",
+  "@setKeywordForTab": {
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
+  },
+  "keywordHint": "例: AI、気候、ビットコイン",
+  "cancel": "キャンセル",
+  "save": "保存",
+  "breakingNewsFixed": "Breaking news は固定です。",
+  "fixedLabel": "固定: {label}",
+  "@fixedLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "noKeyword": "キーワードなし",
+  "regionFilter": "地域フィルター",
+  "refresh": "更新",
+  "toggleTheme": "テーマ切替",
+  "regionSettingsTitle": "記事の地域",
+  "languageSettingsTitle": "アプリ言語",
+  "languageEnglish": "英語",
+  "languageEnglishUk": "英語(英国)",
+  "languageKorean": "韓国語",
+  "languageJapanese": "日本語",
+  "languageFrench": "フランス語",
+  "languageSpanish": "スペイン語",
+  "languageRussian": "ロシア語",
+  "languageArabic": "アラビア語",
+  "notificationSettingsTitle": "プッシュ通知設定",
+  "notificationsTitle": "通知",
+  "notificationsClear": "すべてクリア",
+  "notificationsEmpty": "通知はありません。",
+  "notificationsSeverity": "重大度",
+  "regionUnitedStates": "アメリカ",
+  "regionUnitedKingdom": "イギリス",
+  "regionKorea": "韓国",
+  "regionJapan": "日本",
+  "regionFrance": "フランス",
+  "regionSpain": "スペイン",
+  "regionRussia": "ロシア",
+  "regionUnitedArabEmirates": "アラブ首長国連邦",
+  "regionAllCountries": "すべての国",
+  "syncChoiceTitle": "データの選択",
+  "syncChoiceBody": "アカウントに保存されたデータが見つかりました。どちらを使いますか？",
+  "syncChoiceUseCloud": "アカウントのデータを使用",
+  "syncChoiceKeepLocal": "この端末のデータを使用",
+  "notificationBreakingTitle": "速報アラート",
+  "notificationBreakingSubtitle": "重大(5段階)のみ",
+  "notificationKeywordTitle": "キーワード通知",
+  "notificationSeverity4": "レベル4",
+  "notificationSeverity5": "レベル5",
+  "notificationSeverity4Label": "深刻",
+  "notificationSeverity5Label": "極めて深刻",
+  "exitConfirmTitle": "アプリを終了しますか？",
+  "exitConfirmBody": "アプリを終了しますか？",
+  "exitConfirmNo": "いいえ",
+  "exitConfirmYes": "はい",
+  "loginRequiredTitle": "ログインが必要です",
+  "loginRequiredBody": "タブ購入とトークン充電のためログインしてください。",
+  "loginFailedTitle": "ログインに失敗しました",
+  "loginFailedBody": "Googleログインに失敗しました。もう一度お試しください。",
+  "purchaseLockedTitle": "順番に開放してください",
+  "purchaseLockedBody": "前のタブを先に購入してください。",
+  "insufficientTokensTitle": "トークン不足",
+  "insufficientTokensBody": "タブ購入にはトークンが必要です。",
+  "openTokenStore": "トークンストアへ",
+  "noThanks": "いいえ",
+  "confirm": "OK",
+  "confirmPurchase": "購入",
+  "purchaseTabTitle": "タブ{tab}購入",
+  "@purchaseTabTitle": {
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
+  },
+  "purchaseTabBody": "30日利用 {cost}トークン。購入しますか？",
+  "@purchaseTabBody": {
+    "placeholders": {
+      "cost": {
+        "type": "int"
+      }
+    }
+  },
+  "tabPurchaseLedger": "タブ{tab}購入",
+  "@tabPurchaseLedger": {
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
+  },
+  "tokenPurchaseLedger": "トークン追加 +{count} ({price})",
+  "@tokenPurchaseLedger": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "tokensBalanceLabel": "保有トークン: {count}",
+  "@tokensBalanceLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tabUsageTitle": "タブ利用状況",
+  "tabLabelWithIndex": "{label}タブ",
+  "@tabLabelWithIndex": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "tabRemainingLabel": "残り {time}",
+  "@tabRemainingLabel": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "tabLockedLabel": "ロック",
+  "tokenHistoryTitle": "トークン履歴",
+  "notSignedIn": "未ログイン",
+  "signOut": "ログアウト",
+  "noArticlesFound": "一定の周期で自動更新されます。",
+  "failedToLoadNews": "ニュースの読み込みに失敗しました。",
+  "summaryUnavailable": "要約を取得できません。",
+  "failedToLoadArticle": "記事の読み込みに失敗しました。",
+  "noArticleContent": "記事内容がありません。",
+  "translationOn": "翻訳表示",
+  "originalOn": "原文表示",
+  "contentUnavailable": "内容を取得できません。",
+  "translateFullArticle": "本文を翻訳",
+  "translating": "翻訳中...",
+  "openOriginal": "原文を開く",
+  "openOriginalArticle": "原文記事を開く",
+  "summarySettingsTitle": "要約設定",
+  "summaryLengthLabel": "要約の長さ",
+  "summaryShort": "短め",
+  "summaryMedium": "普通",
+  "summaryLong": "長め",
+  "summaryFull": "全文（要約なし）",
+  "summarySave": "保存",
+  "summaryLimitedNotice": "この記事はアプリ内で全文を表示できません。下のリンクから直接開いてご覧ください。",
+  "translationLongContentNotice": "本文が長いため、要約版で提供しています。",
+  "urgentBadge": "緊急",
+  "translatingBadge": "AI処理中",
+  "processingEtaMinutes": "約{minutes}分",
+  "@processingEtaMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "signInWithGoogle": "Google でログイン",
+  "tapToConnectAccount": "下のボタンでアカウントを接続します。",
+  "googleAccount": "Google アカウント",
+  "connectSync": "キーワードとトークンを端末間で同期します。",
+  "continueWithGoogle": "Google で続行",
+  "tokensStore": "トークンストア",
+  "reportArticle": "この記事を報告する",
+  "blockSource": "このメディアをブロック",
+  "blockedSourceToast": "このメディアをブロックしました。",
+  "blockedSourcesTitle": "ブロックしたメディア",
+  "blockedSourcesEmpty": "ブロックしたメディアはありません。",
+  "unblockSource": "解除",
+  "unblockedSourceToast": "ブロックを解除しました。",
+  "reportedArticleToast": "記事の報告を受け付けました。",
+  "tokenPackLabel": "{count} トークン",
+  "@tokenPackLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "perTokenPrice": "1トークンあたり {price}",
+  "@perTokenPrice": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "language": "言語",
+  "retry": "再試行",
+  "settingsTitle": "設定",
+  "settingsAppearanceTitle": "外観",
+  "contactSupport": "お問い合わせ",
+  "reviewPromptTitle": "SCOOPはいかがですか？",
+  "reviewPromptBody": "アプリの評価をお願いします。",
+  "reviewPromptLater": "後で",
+  "reviewPromptContinue": "続ける",
+  "reviewHighTitle": "ありがとうございます！",
+  "reviewHighBody": "ストアにレビューを投稿しますか？",
+  "reviewWriteAction": "レビューを書く",
+  "reviewLowTitle": "フィードバック",
+  "reviewLowBody": "改善のため、ご意見をお聞かせください。",
+  "bannedTitle": "アカウントが停止されました",
+  "bannedBody": "このアカウントは停止されています。誤りだと思われる場合はサポートにお問い合わせください。",
+  "developerEmailTitle": "開発者メール",
+  "savedArticlesTitle": "保存した記事",
+  "savedArticlesEmpty": "保存した記事がありません。",
+  "saveArticle": "保存",
+  "removeSaved": "解除",
+  "autoRenewTitle": "自動更新",
+  "autoRenewSubtitle": "期限の1時間前に2トークン課金",
+  "ledgerPurchase": "トークンチャージ",
+  "ledgerSpend": "タブ購入",
+  "ledgerAutoRenew": "自動更新",
+  "ledgerSpendWithTab": "タブ購入 · {tab}",
+  "@ledgerSpendWithTab": {
+    "placeholders": {
+      "tab": {}
+    }
+  },
+  "ledgerAutoRenewWithTab": "自動更新 · {tab}",
+  "@ledgerAutoRenewWithTab": {
+    "placeholders": {
+      "tab": {}
+    }
+  },
+  "autoRenewConfirmTitle": "自動更新を有効にしますか？",
+  "autoRenewConfirmBody": "期限の1時間前に2トークンを課金してタブを延長します。",
+  "autoRenewConfirmEnable": "有効にする",
+  "autoRenewFailedTitle": "自動更新に失敗",
+  "autoRenewFailedBody": "トークン不足のため自動更新に失敗しました。",
+  "autoRenewSuccessTitle": "Auto renewal success",
+  "autoRenewSuccessBody": "{count} tabs renewed for 30 more days.",
+  "@autoRenewSuccessBody": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "autoRenewSuccessTabsBody": "{tabs} auto renewal succeeded and extended 30 days.",
+  "@autoRenewSuccessTabsBody": {
+    "placeholders": {
+      "tabs": {}
+    }
+  },
+  "shareArticle": "共有",
+  "shareSheetTitle": "ニュースを共有",
+  "shareSheetShare": "アプリで共有",
+  "shareSheetCopy": "コピー",
+  "shareCopiedToast": "クリップボードにコピーしました。",
+  "shareMessage": "このニュース見た？\n{title}\n{url}\n\n⚡ 世界の重要ニュースをAI翻訳・要約で最速チェック。『SCOOP』で確認しよう。",
+  "@shareMessage": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "rateLimitToast": "更新リクエストが多すぎます。{seconds}秒後に再試行してください。",
+  "@rateLimitToast": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "tokenStoreSubscriptionNote": "有料タブを1つ以上購読すると、広告なしで無制限翻訳が可能です。",
+  "subscribeTabPromptTitle": "キーワードタブを購読しますか？",
+  "insufficientTokensPromptTitle": "トークンが不足しています",
+  "insufficientTokensPromptBody": "トークンストアへ移動しますか？",
+  "bannerSponsored": "スポンサー",
+  "bannerHeadline": "パーソナライズされたニュース特典をチェック",
+  "bannerAdLabel": "広告",
+  "freeTranslationTitle": "無料翻訳の案内",
+  "freeTranslationUsage": "無料翻訳を{used}回使用し、残り{remaining}回です。",
+  "@freeTranslationUsage": {
+    "placeholders": {
+      "used": {
+        "type": "int"
+      },
+      "remaining": {
+        "type": "int"
+      }
+    }
+  },
+  "freeTranslationRemaining": "本日の無料翻訳はあと{count}回です。",
+  "@freeTranslationRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "freeTranslationExhausted": "本日の無料翻訳はすべて使い切りました。",
+  "translationAdTitle": "広告",
+  "translationAdBody": "広告が表示されます。",
+  "onboardingTitle1": "世界のニュースを手のひらに",
+  "onboardingBody1": "気になるキーワードを登録。\n米国・英国・日本など主要ニュースをリアルタイムでチェック。",
+  "onboardingTitle2": "忙しくても大丈夫",
+  "onboardingBody2": "AIが世界のニュースをリアルタイムで要約。\n長い記事は3行に、海外ニュースはあなたの言語に翻訳します。",
+  "onboardingTitle3": "興味を購読しよう",
+  "onboardingBody3": "トークンを集めてタブを増やそう。\nビットコインやAIなど、キーワードで自分だけのニュースフィードを作成。",
+  "onboardingSkip": "スキップ",
+  "onboardingNext": "次へ",
+  "onboardingDone": "開始する",
+  "privacyPolicyTitle": "プライバシーポリシー",
+  "privacyPolicyButton": "プライバシーポリシー / 返金規約",
+  "accountDeletionTitle": "アカウント削除",
+  "privacyConsentTitle": "個人情報の同意",
+  "privacyConsentBody": "アプリを利用するには、以下の必須項目に同意する必要があります。",
+  "privacyConsentRequiredHint": "必須項目にすべてチェックすると同意できます。",
+  "privacyConsentPolicyLabel": "【必須】プライバシーポリシーに同意",
+  "privacyConsentOverseasLabel": "【必須】個人情報の国外移転に同意（Google/Firebase/AdMob など）",
+  "privacyConsentDecline": "同意しない",
+  "privacyConsentAccept": "同意する"
+}

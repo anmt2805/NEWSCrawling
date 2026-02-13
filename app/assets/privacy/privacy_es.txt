@@ -1,0 +1,91 @@
+Política de Privacidad de SCOOP
+Esta Política de Privacidad se aplica a la aplicación móvil SCOOP (la “Aplicación”) proporcionada por Guroom (el “Proveedor del Servicio”). La Aplicación se proporciona “TAL CUAL” (“AS IS”).
+• Fecha de entrada en vigor: 2026-01-25
+• Última actualización: 2026-02-07
+1. Información que recopilamos
+Podemos recopilar y tratar la siguiente información para proporcionar y operar la Aplicación.
+1) Información que usted proporciona (opcional)
+• (Opcional) Si utiliza el inicio de sesión con Google: identificadores de cuenta (p. ej., Firebase UID), apodo, etc.
+• Si se pone en contacto con nosotros: dirección de correo electrónico y el contenido de su consulta (información proporcionada voluntariamente)
+Nota: La Aplicación puede utilizarse sin iniciar sesión. El inicio de sesión con Google es opcional.
+2) Información recopilada automáticamente
+• Información del dispositivo: sistema operativo (OS), versión de la app, configuración de idioma, identificadores del dispositivo (incluidos identificadores publicitarios cuando corresponda)
+• Datos de uso: pantallas/páginas visitadas, marcas de tiempo, tiempo de uso, registros de interacción con funciones
+• Información de red: dirección IP y datos de conexión relacionados
+3) Información que no recopilamos
+No recopilamos datos de ubicación precisa (Precise Location).
+No recopilamos ni procesamos texto privado del usuario (p. ej., notas personales/chats) con fines de IA.
+2. Cómo usamos la información
+Usamos la información únicamente para:
+1) Proporcionar y operar el servicio (entrega de contenido, guardar ajustes)
+2) Mejorar la estabilidad y el rendimiento (analítica y diagnóstico de fallos)
+3) Seguridad y prevención de fraude/abuso
+4) Atención al cliente y avisos esenciales
+5) Procesar compras y entregar contenido de pago (tokens/suscripciones)
+No enviamos notificaciones push de marketing o promocionales.
+3. Servicios de terceros
+La Aplicación puede utilizar servicios de terceros que tratan datos conforme a sus propias políticas, incluidos:
+• Google Play Services
+• Google Firebase (Analytics, Crashlytics, Authentication/Firestore, etc.)
+• Google AdMob (anuncios y verificación de recompensas)
+4. Pagos
+Podemos ofrecer productos y/o servicios de pago (p. ej., tokens, suscripciones). Los pagos se procesan a través de la tienda de aplicaciones (p. ej., Google Play).
+No almacenamos ni recopilamos los datos de su tarjeta de pago.
+Podemos conservar datos relacionados con la transacción (ID de transacción, fecha de compra, tipo de producto, token de verificación) únicamente para gestionar el historial de compras y entregar el contenido adquirido.
+5. Anuncios y verificación de recompensas (AdMob)
+Podemos ofrecer anuncios con recompensa. Para validar recompensas y evitar fraude/duplicación, podemos procesar datos de la transacción publicitaria (p. ej., transaction_id, custom_data). Estos datos se usan solo para verificación y entrega de recompensas.
+6. Funciones de IA
+Podemos utilizar funciones de IA (p. ej., resumen/traducción/clasificación) para mejorar la experiencia del usuario.
+Datos tratados: texto de contenido (títulos/resúmenes) y ajustes mínimos (idioma/palabras clave) necesarios para la función.
+No utilizamos texto privado del usuario (notas/chats) para el procesamiento de IA.
+7. Conservación de datos
+Conservamos los datos personales solo el tiempo necesario para proporcionar el servicio y durante un período razonable posterior, salvo que la ley exija un plazo mayor (p. ej., historial de transacciones para resolver disputas).
+Puede solicitar la eliminación contactándonos.
+8. Sus derechos
+Puede solicitar acceso, corrección, eliminación, limitación del tratamiento o retirada del consentimiento (cuando corresponda) contactando a:
+Correo electrónico: anmt2805@gmail.com
+También puede detener la recopilación futura de datos desinstalando la Aplicación.
+9. Transferencias internacionales
+Podemos transferir, almacenar y procesar información en servidores ubicados fuera de su país (p. ej., mediante Google Firebase/AdMob), lo que puede incluir Estados Unidos y otras regiones.
+• Destinatario: Google LLC y sus filiales/operadores del servicio
+• Finalidad: operación del servicio, analítica, diagnóstico de fallos, entrega de anuncios y verificación de recompensas
+• Categorías de datos: datos mínimos del dispositivo/uso, identificadores publicitarios (cuando corresponda), datos de conexión
+• Conservación: según sea necesario para los fines descritos o según la ley/políticas aplicables
+Si la transferencia internacional es esencial para proporcionar el servicio, la negativa puede limitar la funcionalidad de la Aplicación.
+10. Menores
+La Aplicación no está destinada a menores de 13 años y no recopilamos conscientemente información personal de menores de 13 años. Si detectamos que se ha recopilado, la eliminaremos.
+11. Seguridad
+Aplicamos medidas de seguridad razonables para proteger la información, incluidos controles de acceso y prácticas de seguridad apropiadas para el servicio.
+12. Cambios
+Podemos actualizar esta Política de Privacidad. Los cambios se publicarán en esta página o dentro de la Aplicación. El uso continuado después de la fecha de entrada en vigor implica la aceptación de la versión actualizada.
+13. Contacto
+Correo electrónico: anmt2805@gmail.com
+14. Condiciones de uso y política de servicios de pago
+Artículo 1 (Compra y uso de tokens)
+1. Los usuarios pueden comprar la moneda virtual de pago "tokens" mediante compras integradas de Google.
+2. Se pueden usar dos tokens comprados para activar el acceso a [nombre de función/pestaña específica] durante 30 días.
+3. Al finalizar el periodo de 30 días, el acceso expira automáticamente y, para volver a usarlo, debe reactivarse con tokens.
+Artículo 2 (Desistimiento y política de reembolsos)
+Esta app cumple la normativa aplicable y los reembolsos se rigen por lo siguiente.
+1. Casos reembolsables
+- Los tokens no utilizados pueden reembolsarse si la solicitud se realiza dentro de los 7 días posteriores a la compra.
+- Si existe un defecto grave en la app que impida usar el servicio con normalidad.
+2. Casos no reembolsables
+- Si los tokens comprados se han usado para activar (abrir) contenido: se considera iniciado el suministro de contenido digital y se limitan los reembolsos por cambio de opinión.
+- Tokens comprados hace más de 7 días o tokens gratuitos otorgados en eventos, etc.
+Artículo 3 (Sanciones por reembolsos fraudulentos y abuso)
+Para el correcto funcionamiento del servicio, la empresa prohíbe estrictamente lo siguiente.
+1. Definición de uso fraudulento: solicitar reembolsos repetidamente abusando de las funciones de la tienda (Google Play) después de haber utilizado el servicio, sin seguir el procedimiento legítimo del centro de ayuda dentro de la app.
+2. Medidas de restricción: si se detecta uso fraudulento, la empresa puede, sin previo aviso, adoptar las siguientes medidas.
+- Recuperación de la moneda y suspensión del acceso: deducir los tokens equivalentes al importe reembolsado y revocar de inmediato el acceso activado.
+- Restricción de cuenta (Ban): suspensión permanente del servicio para cuentas con historial de reembolsos fraudulentos confirmado y restricción de nuevos registros.
+3. Acciones legales: si el abuso de reembolsos malintencionado causa daños a la empresa, ésta podrá reclamar indemnización.
+Artículo 4 (Procedimiento de reembolso y reclamaciones)
+1. Todos los pagos siguen en primer lugar las políticas de Google Play Store.
+2. Si un usuario cuya cuenta fue suspendida por uso fraudulento desea impugnarlo, puede presentar una reclamación con el recibo de compra y los motivos a través del canal oficial de atención al cliente.
+Enlaces de terceros
+Google Privacy Policy: https://policies.google.com/privacy
+Google Play Services: https://policies.google.com/privacy
+AdMob: https://support.google.com/admob/answer/6128543
+Google Analytics for Firebase: https://firebase.google.com/policies/analytics
+Firebase Crashlytics: https://firebase.google.com/support/privacy

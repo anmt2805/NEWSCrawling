@@ -1,0 +1,33 @@
+displayName: "News Cron Errors"
+combiner: "OR"
+enabled: true
+notificationChannels:
+- "projects/bamboo-velocity-483806-i8/notificationChannels/16693760875858829450"
+conditions:
+- displayName: "Cron crawl 5xx"
+  conditionThreshold:
+    filter: 'metric.type="logging.googleapis.com/user/cron_crawl_5xx" resource.type="cloud_run_revision"'
+    aggregations:
+    - alignmentPeriod: "300s"
+      perSeriesAligner: "ALIGN_DELTA"
+    comparison: "COMPARISON_GT"
+    thresholdValue: 0
+    duration: "0s"
+- displayName: "Cron push 5xx"
+  conditionThreshold:
+    filter: 'metric.type="logging.googleapis.com/user/cron_push_5xx" resource.type="cloud_run_revision"'
+    aggregations:
+    - alignmentPeriod: "300s"
+      perSeriesAligner: "ALIGN_DELTA"
+    comparison: "COMPARISON_GT"
+    thresholdValue: 0
+    duration: "0s"
+- displayName: "Tasks crawl 5xx"
+  conditionThreshold:
+    filter: 'metric.type="logging.googleapis.com/user/tasks_crawl_5xx" resource.type="cloud_run_revision"'
+    aggregations:
+    - alignmentPeriod: "300s"
+      perSeriesAligner: "ALIGN_DELTA"
+    comparison: "COMPARISON_GT"
+    thresholdValue: 0
+    duration: "0s"

@@ -1,0 +1,353 @@
+{
+  "@@locale": "ar",
+  "tokensLabel": "الرموز : {count}",
+  "@tokensLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "breakingTab": "عاجل",
+  "breakingTabShort": "عاجل",
+  "topBreakingHeadlines": "أهم الأخبار العاجلة · {region}",
+  "@topBreakingHeadlines": {
+    "placeholders": {
+      "region": {
+        "type": "String"
+      }
+    }
+  },
+  "tapTitleToEditKeyword": "اضغط على العنوان لتعديل الكلمة المفتاحية",
+  "noKeywordSet": "لا توجد كلمة مفتاحية لهذه التبويب.",
+  "setKeyword": "تعيين كلمة مفتاحية",
+  "setKeywordForTab": "تعيين كلمة مفتاحية لـ {tab}",
+  "@setKeywordForTab": {
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
+  },
+  "keywordHint": "مثال: AI، المناخ، بيتكوين",
+  "cancel": "إلغاء",
+  "save": "حفظ",
+  "breakingNewsFixed": "Breaking news ثابت.",
+  "fixedLabel": "ثابت: {label}",
+  "@fixedLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "noKeyword": "بدون كلمة مفتاحية",
+  "regionFilter": "تصفية المنطقة",
+  "refresh": "تحديث",
+  "toggleTheme": "تبديل المظهر",
+  "regionSettingsTitle": "منطقة المقال",
+  "languageSettingsTitle": "لغة التطبيق",
+  "languageEnglish": "الإنجليزية",
+  "languageEnglishUk": "الإنجليزية (المملكة المتحدة)",
+  "languageKorean": "الكورية",
+  "languageJapanese": "اليابانية",
+  "languageFrench": "الفرنسية",
+  "languageSpanish": "الإسبانية",
+  "languageRussian": "الروسية",
+  "languageArabic": "العربية",
+  "notificationSettingsTitle": "إعدادات الإشعارات",
+  "notificationsTitle": "الإشعارات",
+  "notificationsClear": "مسح الكل",
+  "notificationsEmpty": "لا توجد إشعارات.",
+  "notificationsSeverity": "مستوى الخطورة",
+  "regionUnitedStates": "الولايات المتحدة",
+  "regionUnitedKingdom": "المملكة المتحدة",
+  "regionKorea": "كوريا الجنوبية",
+  "regionJapan": "اليابان",
+  "regionFrance": "فرنسا",
+  "regionSpain": "إسبانيا",
+  "regionRussia": "روسيا",
+  "regionUnitedArabEmirates": "الإمارات",
+  "regionAllCountries": "كل الدول",
+  "syncChoiceTitle": "اختيار البيانات",
+  "syncChoiceBody": "يوجد بيانات محفوظة في الحساب. أي بيانات تريد استخدامها؟",
+  "syncChoiceUseCloud": "استخدام بيانات الحساب",
+  "syncChoiceKeepLocal": "الاحتفاظ بهذا الجهاز",
+  "notificationBreakingTitle": "تنبيهات عاجلة",
+  "notificationBreakingSubtitle": "حرج (المستوى 5) فقط",
+  "notificationKeywordTitle": "تنبيهات الكلمات المفتاحية",
+  "notificationSeverity4": "المستوى 4",
+  "notificationSeverity5": "المستوى 5",
+  "notificationSeverity4Label": "خطير",
+  "notificationSeverity5Label": "خطير جدًا",
+  "exitConfirmTitle": "إغلاق التطبيق؟",
+  "exitConfirmBody": "هل تريد إغلاق التطبيق؟",
+  "exitConfirmNo": "لا",
+  "exitConfirmYes": "نعم",
+  "loginRequiredTitle": "يلزم تسجيل الدخول",
+  "loginRequiredBody": "سجّل الدخول لشراء التبويبات أو الرموز.",
+  "loginFailedTitle": "فشل تسجيل الدخول",
+  "loginFailedBody": "فشل تسجيل الدخول عبر Google. حاول مرة أخرى.",
+  "purchaseLockedTitle": "افتح بالترتيب",
+  "purchaseLockedBody": "يرجى فتح التبويب السابق أولًا.",
+  "insufficientTokensTitle": "الرموز غير كافية",
+  "insufficientTokensBody": "تحتاج إلى رموز إضافية لشراء هذا التبويب.",
+  "openTokenStore": "فتح متجر الرموز",
+  "noThanks": "لا",
+  "confirm": "حسنًا",
+  "confirmPurchase": "شراء",
+  "purchaseTabTitle": "شراء التبويب {tab}",
+  "@purchaseTabTitle": {
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
+  },
+  "purchaseTabBody": "{cost} رمزًا لمدة 30 يومًا. متابعة؟",
+  "@purchaseTabBody": {
+    "placeholders": {
+      "cost": {
+        "type": "int"
+      }
+    }
+  },
+  "tabPurchaseLedger": "شراء تبويب {tab}",
+  "@tabPurchaseLedger": {
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
+  },
+  "tokenPurchaseLedger": "شراء رموز +{count} ({price})",
+  "@tokenPurchaseLedger": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "tokensBalanceLabel": "الرصيد: {count}",
+  "@tokensBalanceLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tabUsageTitle": "حالة التبويبات",
+  "tabLabelWithIndex": "تبويب {label}",
+  "@tabLabelWithIndex": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "tabRemainingLabel": "المتبقي {time}",
+  "@tabRemainingLabel": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "tabLockedLabel": "مغلق",
+  "tokenHistoryTitle": "سجل الرموز",
+  "notSignedIn": "غير مسجّل",
+  "signOut": "تسجيل الخروج",
+  "noArticlesFound": "يتم التحديث تلقائيًا على فترات منتظمة.",
+  "failedToLoadNews": "تعذر تحميل الأخبار.",
+  "summaryUnavailable": "الملخص غير متوفر.",
+  "failedToLoadArticle": "تعذر تحميل المقال.",
+  "noArticleContent": "لا يوجد محتوى للمقال.",
+  "translationOn": "الترجمة مفعلة",
+  "originalOn": "الأصل مفعّل",
+  "contentUnavailable": "المحتوى غير متوفر.",
+  "translateFullArticle": "ترجمة المقال بالكامل",
+  "translating": "جارٍ الترجمة...",
+  "openOriginal": "فتح الأصل",
+  "openOriginalArticle": "فتح المقال الأصلي",
+  "summarySettingsTitle": "إعدادات الملخص",
+  "summaryLengthLabel": "طول الملخص",
+  "summaryShort": "قصير",
+  "summaryMedium": "متوسط",
+  "summaryLong": "طويل",
+  "summaryFull": "النص الكامل (بدون ملخص)",
+  "summarySave": "حفظ",
+  "summaryLimitedNotice": "لا يمكن عرض هذه المقالة كاملة داخل التطبيق. يرجى فتح الرابط أدناه لقراءتها.",
+  "translationLongContentNotice": "النص الأصلي طويل جدًا. يتم عرض ملخص مترجم.",
+  "urgentBadge": "عاجل",
+  "translatingBadge": "جارٍ المعالجة بالذكاء الاصطناعي",
+  "processingEtaMinutes": "حوالي {minutes} دقيقة",
+  "@processingEtaMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "signInWithGoogle": "تسجيل الدخول عبر Google",
+  "tapToConnectAccount": "اضغط أدناه لربط حسابك.",
+  "googleAccount": "حساب Google",
+  "connectSync": "مزامنة الكلمات المفتاحية والرموز عبر الأجهزة.",
+  "continueWithGoogle": "المتابعة باستخدام Google",
+  "tokensStore": "متجر الرموز",
+  "reportArticle": "الإبلاغ عن المقال",
+  "blockSource": "حظر هذا المصدر",
+  "blockedSourceToast": "تم حظر المصدر.",
+  "blockedSourcesTitle": "المصادر المحظورة",
+  "blockedSourcesEmpty": "لا توجد مصادر محظورة.",
+  "unblockSource": "إلغاء الحظر",
+  "unblockedSourceToast": "تم إلغاء الحظر عن المصدر.",
+  "reportedArticleToast": "تم إرسال البلاغ.",
+  "tokenPackLabel": "{count} رمز",
+  "@tokenPackLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "perTokenPrice": "{price} لكل رمز",
+  "@perTokenPrice": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "language": "اللغة",
+  "retry": "إعادة المحاولة",
+  "settingsTitle": "الإعدادات",
+  "settingsAppearanceTitle": "المظهر",
+  "contactSupport": "الاتصال بالدعم",
+  "reviewPromptTitle": "هل تستمتع بـ SCOOP؟",
+  "reviewPromptBody": "كيف تقيّم التطبيق؟",
+  "reviewPromptLater": "لاحقًا",
+  "reviewPromptContinue": "متابعة",
+  "reviewHighTitle": "شكرًا!",
+  "reviewHighBody": "هل ترغب في كتابة مراجعة على المتجر؟",
+  "reviewWriteAction": "اكتب مراجعة",
+  "reviewLowTitle": "إرسال ملاحظات",
+  "reviewLowBody": "أخبرنا بما يمكن تحسينه.",
+  "bannedTitle": "تم إيقاف الحساب",
+  "bannedBody": "تم إيقاف هذا الحساب. إذا كنت تعتقد أن ذلك خطأ، يرجى التواصل مع الدعم.",
+  "developerEmailTitle": "بريد المطور الإلكتروني",
+  "savedArticlesTitle": "المقالات المحفوظة",
+  "savedArticlesEmpty": "لا توجد مقالات محفوظة.",
+  "saveArticle": "حفظ",
+  "removeSaved": "إزالة",
+  "autoRenewTitle": "التجديد التلقائي",
+  "autoRenewSubtitle": "خصم رمزين قبل ساعة من الانتهاء",
+  "autoRenewConfirmTitle": "تفعيل التجديد التلقائي؟",
+  "autoRenewConfirmBody": "سيتم خصم الرمزين تلقائيًا قبل ساعة من انتهاء التبويب، فقط إذا كانت لديك رموز كافية.",
+  "autoRenewConfirmEnable": "تفعيل",
+  "autoRenewFailedTitle": "فشل التجديد التلقائي",
+  "autoRenewFailedBody": "الرموز غير كافية، تم إيقاف التجديد التلقائي.",
+  "autoRenewSuccessTitle": "Auto renewal success",
+  "autoRenewSuccessBody": "{count} tabs renewed for 30 more days.",
+  "@autoRenewSuccessBody": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "autoRenewSuccessTabsBody": "{tabs} auto renewal succeeded and extended 30 days.",
+  "@autoRenewSuccessTabsBody": {
+    "placeholders": {
+      "tabs": {}
+    }
+  },
+  "ledgerPurchase": "شحن الرموز",
+  "ledgerSpend": "شراء تبويب",
+  "ledgerAutoRenew": "التجديد التلقائي",
+  "ledgerSpendWithTab": "شراء تبويب · {tab}",
+  "@ledgerSpendWithTab": {
+    "placeholders": {
+      "tab": {}
+    }
+  },
+  "ledgerAutoRenewWithTab": "التجديد التلقائي · {tab}",
+  "@ledgerAutoRenewWithTab": {
+    "placeholders": {
+      "tab": {}
+    }
+  },
+  "shareArticle": "مشاركة",
+  "shareSheetTitle": "مشاركة الخبر",
+  "shareSheetShare": "مشاركة عبر تطبيق",
+  "shareSheetCopy": "نسخ",
+  "shareCopiedToast": "تم النسخ إلى الحافظة.",
+  "shareMessage": "هل رأيت هذا الخبر؟\n{title}\n{url}\n\n⚡ أهم أخبار العالم أسرع بترجمة وتلخيص الذكاء الاصطناعي عبر «SCOOP».",
+  "@shareMessage": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "rateLimitToast": "طلبات تحديث كثيرة جدًا. حاول مرة أخرى بعد {seconds} ثانية.",
+  "@rateLimitToast": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "tokenStoreSubscriptionNote": "اشترك في علامة تبويب مدفوعة واحدة على الأقل للحصول على ترجمة غير محدودة بدون إعلانات.",
+  "subscribeTabPromptTitle": "هل تريد الاشتراك في علامة تبويب الكلمات المفتاحية؟",
+  "insufficientTokensPromptTitle": "الرموز غير كافية",
+  "insufficientTokensPromptBody": "هل تريد الانتقال إلى متجر الرموز؟",
+  "bannerSponsored": "برعاية",
+  "bannerHeadline": "اكتشف مزايا الأخبار المخصصة",
+  "bannerAdLabel": "إعلان",
+  "freeTranslationTitle": "ترجمات مجانية",
+  "freeTranslationUsage": "استخدمت {used} ترجمة مجانية؛ يتبقى {remaining} اليوم.",
+  "@freeTranslationUsage": {
+    "placeholders": {
+      "used": {
+        "type": "int"
+      },
+      "remaining": {
+        "type": "int"
+      }
+    }
+  },
+  "freeTranslationRemaining": "يتبقى لديك اليوم {count} ترجمة مجانية.",
+  "@freeTranslationRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "freeTranslationExhausted": "لقد استخدمت جميع الترجمات المجانية اليوم.",
+  "translationAdTitle": "إعلان",
+  "translationAdBody": "سيتم عرض إعلان.",
+  "onboardingTitle1": "أخبار العالم بين يديك",
+  "onboardingBody1": "أضف الكلمات التي تهمك.\nتابع أهم الأخبار من الولايات المتحدة والمملكة المتحدة واليابان وغيرها لحظة بلحظة.",
+  "onboardingTitle2": "حتى لو كنت مشغولًا",
+  "onboardingBody2": "الذكاء الاصطناعي يلخّص المقالات الطويلة في 3 أسطر ويترجم الأخبار العالمية إلى لغتك.",
+  "onboardingTitle3": "اشترك باهتماماتك",
+  "onboardingBody3": "اجمع الرموز لفتح المزيد من التبويبات.\nبيتكوين، الذكاء الاصطناعي… أنشئ موجزك الخاص.",
+  "onboardingSkip": "تخطي",
+  "onboardingNext": "التالي",
+  "onboardingDone": "ابدأ",
+  "privacyPolicyTitle": "سياسة الخصوصية",
+  "privacyPolicyButton": "سياسة الخصوصية / شروط الاسترداد",
+  "accountDeletionTitle": "حذف الحساب",
+  "privacyConsentTitle": "موافقة الخصوصية",
+  "privacyConsentBody": "لاستخدام التطبيق، يجب الموافقة على البنود الإلزامية أدناه.",
+  "privacyConsentRequiredHint": "يرجى تحديد جميع البنود الإلزامية للمتابعة.",
+  "privacyConsentPolicyLabel": "[إلزامي] الموافقة على سياسة الخصوصية",
+  "privacyConsentOverseasLabel": "[إلزامي] الموافقة على نقل البيانات خارج الدولة (Google/Firebase/AdMob)",
+  "privacyConsentDecline": "رفض",
+  "privacyConsentAccept": "موافقة"
+}

@@ -1,0 +1,200 @@
+name: Deploy And Release
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - server/**
+      - public/**
+      - firebase.json
+      - .firebaserc
+      - env.yaml
+      - app/**
+      - .github/workflows/deploy-and-release.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+env:
+  SERVER_PROJECT_ID: bamboo-velocity-483806-i8
+  SERVER_REGION: asia-northeast3
+  SERVER_SERVICE_NAME: news-crawl-server
+  SERVER_IMAGE: asia-northeast3-docker.pkg.dev/bamboo-velocity-483806-i8/cloud-run-source-deploy/news-crawl-server
+  FIREBASE_PROJECT_ID: news-caebd
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      server_changed: ${{ steps.filter.outputs.server }}
+      admin_changed: ${{ steps.filter.outputs.admin }}
+      app_version_changed: ${{ steps.filter.outputs.app_version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            server:
+              - 'server/**'
+              - 'env.yaml'
+            admin:
+              - 'public/**'
+              - 'firebase.json'
+              - '.firebaserc'
+            app_version:
+              - 'app/pubspec.yaml'
+
+  deploy_server:
+    needs: changes
+    if: needs.changes.outputs.server_changed == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVER_SA_KEY }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build server container image
+        working-directory: server
+        run: |
+          gcloud builds submit \
+            --project "${SERVER_PROJECT_ID}" \
+            --tag "${SERVER_IMAGE}" \
+            .
+
+      - name: Deploy Cloud Run service
+        working-directory: server
+        run: |
+          gcloud run deploy "${SERVER_SERVICE_NAME}" \
+            --image "${SERVER_IMAGE}" \
+            --region "${SERVER_REGION}" \
+            --project "${SERVER_PROJECT_ID}" \
+            --allow-unauthenticated \
+            --min-instances 1 \
+            --max-instances 2 \
+            --timeout 900s \
+            --env-vars-file ../env.yaml
+
+  deploy_admin_web:
+    needs: changes
+    if: needs.changes.outputs.admin_changed == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Deploy Firebase Hosting
+        run: |
+          firebase deploy \
+            --only hosting \
+            --project "${FIREBASE_PROJECT_ID}" \
+            --token "${{ secrets.FIREBASE_TOKEN }}" \
+            --non-interactive
+
+  build_and_upload_app:
+    needs: changes
+    if: needs.changes.outputs.app_version_changed == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install app dependencies
+        working-directory: app
+        run: flutter pub get
+
+      - name: Build AAB (obfuscated + symbols)
+        working-directory: app
+        run: |
+          flutter build appbundle \
+            --release \
+            --obfuscate \
+            --split-debug-info=build/symbols
+
+      - name: Build split APKs (obfuscated + symbols)
+        working-directory: app
+        run: |
+          flutter build apk \
+            --release \
+            --split-per-abi \
+            --obfuscate \
+            --split-debug-info=build/symbols
+
+      - name: Extract app version
+        id: version
+        working-directory: app
+        shell: bash
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}')
+          if [ -z "$VERSION" ]; then
+            echo "Failed to read app version from pubspec.yaml"
+            exit 1
+          fi
+          SAFE_VERSION=${VERSION//+/-}
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "safe_version=$SAFE_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Rename release files with version
+        working-directory: app
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.safe_version }}"
+          cp build/app/outputs/bundle/release/app-release.aab "build/app/outputs/bundle/release/news-crawl-${VERSION}.aab"
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk "build/app/outputs/flutter-apk/news-crawl-${VERSION}-arm64-v8a.apk"
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk "build/app/outputs/flutter-apk/news-crawl-${VERSION}-armeabi-v7a.apk"
+          cp build/app/outputs/flutter-apk/app-x86_64-release.apk "build/app/outputs/flutter-apk/news-crawl-${VERSION}-x86_64.apk"
+          tar -czf "build/news-crawl-symbols-${VERSION}.tar.gz" -C build symbols
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: news-crawl-${{ steps.version.outputs.safe_version }}
+          path: |
+            app/build/app/outputs/bundle/release/news-crawl-${{ steps.version.outputs.safe_version }}.aab
+            app/build/app/outputs/flutter-apk/news-crawl-${{ steps.version.outputs.safe_version }}-arm64-v8a.apk
+            app/build/app/outputs/flutter-apk/news-crawl-${{ steps.version.outputs.safe_version }}-armeabi-v7a.apk
+            app/build/app/outputs/flutter-apk/news-crawl-${{ steps.version.outputs.safe_version }}-x86_64.apk
+            app/build/news-crawl-symbols-${{ steps.version.outputs.safe_version }}.tar.gz
+
+      - name: Create/update GitHub release and upload files
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: app-v${{ steps.version.outputs.safe_version }}
+          name: App v${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          overwrite_files: true
+          files: |
+            app/build/app/outputs/bundle/release/news-crawl-${{ steps.version.outputs.safe_version }}.aab
+            app/build/app/outputs/flutter-apk/news-crawl-${{ steps.version.outputs.safe_version }}-arm64-v8a.apk
+            app/build/app/outputs/flutter-apk/news-crawl-${{ steps.version.outputs.safe_version }}-armeabi-v7a.apk
+            app/build/app/outputs/flutter-apk/news-crawl-${{ steps.version.outputs.safe_version }}-x86_64.apk
+            app/build/news-crawl-symbols-${{ steps.version.outputs.safe_version }}.tar.gz

@@ -1,0 +1,11 @@
+# Ignore local/dev artifacts to keep Cloud Build uploads small.
+node_modules/
+.git/
+.gitignore
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

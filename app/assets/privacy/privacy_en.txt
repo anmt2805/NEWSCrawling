@@ -1,0 +1,92 @@
+Privacy Policy
+SCOOP Privacy Policy
+This Privacy Policy applies to the mobile application SCOOP (the “Application”) provided by Guroom (the “Service Provider”). The Application is provided on an “AS IS” basis.
+Effective Date: 2026-01-25
+Last Updated: 2026-02-07
+1. Information We Collect
+We may collect and process the following information to provide and operate the Application.
+1) Information You Provide (Optional)
+(Optional) If you use Google Sign-In: account identifiers (e.g., Firebase UID), nickname, etc.
+If you contact us: email address and the content of your inquiry (information you voluntarily provide)
+Note: The Application can be used without logging in. Google Sign-In is optional.
+2) Information Collected Automatically
+Device information: OS, app version, language settings, device identifiers (including advertising identifiers where applicable)
+Usage data: screens/pages visited, timestamps, time spent, feature interaction logs
+Network information: IP address and related connection data
+3) Information We Do Not Collect
+We do not collect precise location data.
+We do not collect or process user private text (e.g., personal notes/chats) for AI purposes.
+2. How We Use Information
+We use information only for:
+Providing and operating the service (content delivery, saving settings)
+Improving stability and performance (analytics/crash diagnostics)
+Security and fraud/abuse prevention
+Customer support and essential notices
+Processing purchases and delivering paid content (tokens/subscriptions)
+We do not send marketing or promotional push notifications.
+3. Third-Party Services
+The Application may use third-party services that process data under their own privacy policies, including:
+Google Play Services
+Google Firebase (Analytics, Crashlytics, Authentication/Firestore, etc.)
+Google AdMob (ads and rewarded ad verification)
+4. Payments
+We may offer paid products and/or services (e.g., tokens, subscriptions). Payments are processed via the app store (e.g., Google Play).
+We do not store or collect payment card details.
+We may retain transaction-related data (transaction ID, purchase date, product type, purchase verification token) solely to manage purchase history and deliver purchased content.
+5. Ads and Reward Verification (AdMob)
+We may provide rewarded ads. To validate rewards and prevent fraud/duplication, we may process ad transaction data (e.g., transaction_id, custom_data). This data is used only for reward verification and fulfillment.
+6. AI Features
+We may use AI features (e.g., summarization/translation/classification) to improve user experience.
+Data processed: content text (titles/summaries) and minimal settings (language/keywords) required for the feature
+We do not use user private text (notes/chats) for AI processing.
+7. Data Retention
+We retain personal data only as long as necessary to provide the service and for a reasonable period thereafter, unless a longer retention is required by law (e.g., transaction history for dispute handling).
+You may request deletion by contacting us.
+8. Your Rights
+You may request access, correction, deletion, restriction of processing, or withdrawal of consent (where applicable) by contacting:
+Email: anmt2805@gmail.com
+You may also stop further data collection by uninstalling the Application.
+9. International Data Transfers
+We may transfer, store, and process information on servers located outside your country (e.g., via Google Firebase/AdMob). This may include the United States and other regions where service providers operate.
+Recipient: Google LLC and its affiliates/service operators
+Purpose: service operation, analytics, crash diagnostics, ad delivery and reward verification
+Data categories: minimal device/usage data, advertising identifiers (where applicable), connection data
+Retention: as necessary for the purposes described above or as required by applicable laws/policies
+If international transfer is essential to provide the service, refusal may limit the Application’s functionality.
+10. Children
+The Application is not intended for children under 13, and we do not knowingly collect personal information from them. If we become aware that such information has been collected, we will delete it.
+11. Security
+We apply reasonable safeguards to protect information, including access controls and security practices appropriate for the service.
+12. Changes
+We may update this Privacy Policy. Changes will be posted on this page or within the Application. Continued use after the effective date of changes constitutes acceptance of the updated policy.
+13. Contact
+Email: anmt2805@gmail.com
+14. Terms of Service and Paid Services Policy
+Article 1 (Purchase and Use of Tokens)
+1. Users may purchase the in-app paid currency "tokens" through Google in-app purchases.
+2. Users can spend two purchased tokens to activate access to [specific feature/tab name] for 30 days.
+3. After the 30-day period ends, the access expires automatically. To use it again, users must reactivate it using tokens.
+Article 2 (Withdrawal and Refund Policy)
+This app complies with applicable laws, and refunds are governed as follows.
+1. Refundable cases
+- Unused tokens may be refunded if requested within 7 days of purchase.
+- If a material defect in the app prevents normal use of the service.
+2. Non-refundable cases
+- If purchased tokens have been used to activate (open) content: this is deemed the start of digital content provision, and refunds for a change of mind are restricted.
+- Tokens purchased more than 7 days ago, or free tokens granted via events, etc.
+Article 3 (Sanctions for Fraudulent Refunds and Abuse)
+To ensure healthy operation of the service, the company strictly prohibits the following.
+1. Definition of fraudulent use: repeatedly requesting refunds by abusing store (Google Play) functions after already using the service, without going through proper customer support procedures in the app.
+2. Restrictions: If fraudulent use is detected, the company may, without prior notice, take the following measures.
+- Reclaim currency and suspend service access: deduct tokens equivalent to the refunded amount and immediately revoke activated access.
+- Account restriction (Ban): permanently suspend service for accounts with confirmed fraudulent refund history and restrict new registrations.
+3. Legal action: If malicious refund abuse causes damage to the company, the company may seek compensation for damages.
+Article 4 (Refund Process and Appeals)
+1. All payments primarily follow Google Play Store policies.
+2. If a user whose account has been suspended due to fraudulent use has objections, they may submit a statement with purchase receipt and reasons through the official customer support channel.
+Third-Party Links
+Google Privacy Policy: https://policies.google.com/privacy
+Google Play Services: https://policies.google.com/privacy
+AdMob: https://support.google.com/admob/answer/6128543
+Google Analytics for Firebase: https://firebase.google.com/policies/analytics
+Firebase Crashlytics: https://firebase.google.com/support/privacy

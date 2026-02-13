@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+    }
+    match /translationCache/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /translations/{docId} {
+      allow read, write: if false;
+    }
+    match /admobRewards/{docId} {
+      allow read, write: if false;
+    }
+    match /iapPurchases/{docId} {
+      allow read, write: if false;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

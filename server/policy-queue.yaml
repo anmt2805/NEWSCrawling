@@ -1,0 +1,16 @@
+displayName: "Cloud Tasks Backlog"
+combiner: "OR"
+enabled: true
+notificationChannels:
+- "projects/bamboo-velocity-483806-i8/notificationChannels/16693760875858829450"
+conditions:
+- displayName: "Queue Backlog > 600"
+  conditionThreshold:
+    # ?? ?? ?? ??(depth)? ????
+    filter: 'metric.type="cloudtasks.googleapis.com/queue/depth" resource.type="cloud_tasks_queue" resource.label.queue_id="news-refresh-queue"'
+    aggregations:
+    - alignmentPeriod: "60s"
+      perSeriesAligner: "ALIGN_MAX"
+    comparison: "COMPARISON_GT"
+    thresholdValue: 600
+    duration: "300s"

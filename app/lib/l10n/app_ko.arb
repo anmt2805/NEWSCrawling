@@ -1,0 +1,353 @@
+{
+  "@@locale": "ko",
+  "tokensLabel": "토큰 : {count}",
+  "@tokensLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "breakingTab": "속보",
+  "breakingTabShort": "속보",
+  "topBreakingHeadlines": "주요 속보 · {region}",
+  "@topBreakingHeadlines": {
+    "placeholders": {
+      "region": {
+        "type": "String"
+      }
+    }
+  },
+  "tapTitleToEditKeyword": "제목을 눌러 키워드 수정",
+  "noKeywordSet": "이 탭에 키워드가 없습니다.",
+  "setKeyword": "키워드 설정",
+  "setKeywordForTab": "{tab} 키워드 설정",
+  "@setKeywordForTab": {
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
+  },
+  "keywordHint": "예: AI, 기후, 비트코인",
+  "cancel": "취소",
+  "save": "저장",
+  "breakingNewsFixed": "브레이킹 뉴스는 고정입니다.",
+  "fixedLabel": "고정: {label}",
+  "@fixedLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "noKeyword": "키워드 없음",
+  "regionFilter": "지역 필터",
+  "refresh": "새로고침",
+  "toggleTheme": "테마 전환",
+  "regionSettingsTitle": "기사 작성 국가",
+  "languageSettingsTitle": "앱 언어",
+  "languageEnglish": "영어",
+  "languageEnglishUk": "영어(영국)",
+  "languageKorean": "한국어",
+  "languageJapanese": "일본어",
+  "languageFrench": "프랑스어",
+  "languageSpanish": "스페인어",
+  "languageRussian": "러시아어",
+  "languageArabic": "아랍어",
+  "notificationSettingsTitle": "푸시 알림 설정",
+  "notificationsTitle": "알림",
+  "notificationsClear": "모두 지우기",
+  "notificationsEmpty": "알림이 없습니다.",
+  "notificationsSeverity": "심각도",
+  "regionUnitedStates": "미국",
+  "regionUnitedKingdom": "영국",
+  "regionKorea": "대한민국",
+  "regionJapan": "일본",
+  "regionFrance": "프랑스",
+  "regionSpain": "스페인",
+  "regionRussia": "러시아",
+  "regionUnitedArabEmirates": "아랍에미리트",
+  "regionAllCountries": "모든 국가",
+  "syncChoiceTitle": "데이터 선택",
+  "syncChoiceBody": "계정에 저장된 데이터가 있습니다. 어떤 데이터를 사용할까요?",
+  "syncChoiceUseCloud": "계정 데이터 불러오기",
+  "syncChoiceKeepLocal": "현재 기기 유지",
+  "notificationBreakingTitle": "속보 알림",
+  "notificationBreakingSubtitle": "긴급(5단계)만 수신",
+  "notificationKeywordTitle": "키워드 알림",
+  "notificationSeverity4": "4단계",
+  "notificationSeverity5": "5단계",
+  "notificationSeverity4Label": "심각",
+  "notificationSeverity5Label": "매우 심각",
+  "exitConfirmTitle": "앱을 종료하시겠습니까?",
+  "exitConfirmBody": "앱을 종료할까요?",
+  "exitConfirmNo": "아니요",
+  "exitConfirmYes": "예",
+  "loginRequiredTitle": "로그인이 필요합니다",
+  "loginRequiredBody": "탭 구매와 토큰 충전을 위해 로그인해주세요.",
+  "loginFailedTitle": "로그인 실패",
+  "loginFailedBody": "Google 로그인에 실패했습니다. 다시 시도해주세요.",
+  "purchaseLockedTitle": "순서대로 해제하세요",
+  "purchaseLockedBody": "이전 탭을 먼저 구매해야 합니다.",
+  "insufficientTokensTitle": "토큰이 부족합니다",
+  "insufficientTokensBody": "탭을 구매하려면 토큰을 충전해주세요.",
+  "openTokenStore": "토큰 상점 열기",
+  "noThanks": "아니오",
+  "confirm": "확인",
+  "confirmPurchase": "구매",
+  "purchaseTabTitle": "{tab} 탭 구매",
+  "@purchaseTabTitle": {
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
+  },
+  "purchaseTabBody": "30일 이용권 {cost} 토큰을 사용합니다. 구매할까요?",
+  "@purchaseTabBody": {
+    "placeholders": {
+      "cost": {
+        "type": "int"
+      }
+    }
+  },
+  "tabPurchaseLedger": "{tab} 탭 이용권 구매",
+  "@tabPurchaseLedger": {
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
+  },
+  "tokenPurchaseLedger": "토큰 충전 +{count} ({price})",
+  "@tokenPurchaseLedger": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "tokensBalanceLabel": "보유 토큰: {count}",
+  "@tokensBalanceLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tabUsageTitle": "탭 이용 현황",
+  "tabLabelWithIndex": "{label} 탭",
+  "@tabLabelWithIndex": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "tabRemainingLabel": "잔여 {time}",
+  "@tabRemainingLabel": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "tabLockedLabel": "잠김",
+  "tokenHistoryTitle": "토큰 내역",
+  "notSignedIn": "로그인되지 않음",
+  "signOut": "로그아웃",
+  "noArticlesFound": "일정 주기에 맞춰 자동 업데이트 됩니다.",
+  "failedToLoadNews": "뉴스를 불러오지 못했습니다.",
+  "summaryUnavailable": "요약을 불러올 수 없습니다.",
+  "failedToLoadArticle": "기사를 불러오지 못했습니다.",
+  "noArticleContent": "기사 내용이 없습니다.",
+  "translationOn": "번역 보기",
+  "originalOn": "원문 보기",
+  "contentUnavailable": "내용을 불러올 수 없습니다.",
+  "translateFullArticle": "본문 번역",
+  "translating": "번역 중...",
+  "openOriginal": "원문 열기",
+  "openOriginalArticle": "원문 기사 열기",
+  "summarySettingsTitle": "요약 설정",
+  "summaryLengthLabel": "요약 길이",
+  "summaryShort": "짧게",
+  "summaryMedium": "중간",
+  "summaryLong": "길게",
+  "summaryFull": "원문 전체 (요약 없음)",
+  "summarySave": "저장",
+  "summaryLimitedNotice": "해당 기사는 앱에서 완전한 열람이 불가합니다. 아래 링크로 직접 접속하시어 읽어주시기 바랍니다.",
+  "translationLongContentNotice": "원문이 길어 요약본으로 제공됩니다.",
+  "urgentBadge": "긴급",
+  "translatingBadge": "AI 가공 중",
+  "processingEtaMinutes": "약 {minutes}분",
+  "@processingEtaMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "signInWithGoogle": "Google로 로그인",
+  "tapToConnectAccount": "아래 버튼으로 계정을 연결하세요.",
+  "googleAccount": "Google 계정",
+  "connectSync": "키워드와 토큰을 기기 간 동기화합니다.",
+  "continueWithGoogle": "Google로 계속",
+  "tokensStore": "토큰 상점",
+  "reportArticle": "이 기사 신고하기",
+  "blockSource": "이 언론사 차단하기",
+  "blockedSourceToast": "해당 언론사를 차단했습니다.",
+  "blockedSourcesTitle": "차단된 언론사",
+  "blockedSourcesEmpty": "차단한 언론사가 없습니다.",
+  "unblockSource": "차단 해제",
+  "unblockedSourceToast": "차단을 해제했습니다.",
+  "reportedArticleToast": "기사 신고가 접수되었습니다.",
+  "tokenPackLabel": "{count} 토큰",
+  "@tokenPackLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "perTokenPrice": "토큰당 {price}",
+  "@perTokenPrice": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "language": "언어",
+  "retry": "다시 시도",
+  "settingsTitle": "설정",
+  "settingsAppearanceTitle": "모양",
+  "contactSupport": "문의하기",
+  "reviewPromptTitle": "SCOOP은 어떠신가요?",
+  "reviewPromptBody": "앱을 평가해 주세요.",
+  "reviewPromptLater": "나중에",
+  "reviewPromptContinue": "계속",
+  "reviewHighTitle": "감사합니다!",
+  "reviewHighBody": "스토어에 리뷰를 남겨주실래요?",
+  "reviewWriteAction": "리뷰 쓰기",
+  "reviewLowTitle": "의견 보내기",
+  "reviewLowBody": "불편한 점을 알려주시면 개선에 도움이 됩니다.",
+  "bannedTitle": "계정이 정지되었습니다",
+  "bannedBody": "이 계정은 이용이 제한되었습니다. 문제가 있다면 문의하기로 알려주세요.",
+  "developerEmailTitle": "개발자 이메일",
+  "savedArticlesTitle": "저장한 기사",
+  "savedArticlesEmpty": "저장된 기사가 없습니다.",
+  "saveArticle": "저장",
+  "removeSaved": "해제",
+  "autoRenewTitle": "자동 결제",
+  "autoRenewSubtitle": "만료 1시간 전에 2토큰 결제",
+  "ledgerPurchase": "토큰 충전",
+  "ledgerSpend": "탭 구매",
+  "ledgerAutoRenew": "자동 결제",
+  "ledgerSpendWithTab": "탭 구매 · {tab}",
+  "@ledgerSpendWithTab": {
+    "placeholders": {
+      "tab": {}
+    }
+  },
+  "ledgerAutoRenewWithTab": "자동 결제 · {tab}",
+  "@ledgerAutoRenewWithTab": {
+    "placeholders": {
+      "tab": {}
+    }
+  },
+  "autoRenewConfirmTitle": "자동 결제를 켤까요?",
+  "autoRenewConfirmBody": "만료 1시간 전에 2토큰을 결제하여 탭을 연장합니다.",
+  "autoRenewConfirmEnable": "켜기",
+  "autoRenewFailedTitle": "자동 결제 실패",
+  "autoRenewFailedBody": "토큰이 부족하여 자동 결제가 실패했습니다.",
+  "autoRenewSuccessTitle": "자동 결제 성공",
+  "autoRenewSuccessBody": "{count}개 탭 자동 결제 성공, 30일 연장되었습니다.",
+  "@autoRenewSuccessBody": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "autoRenewSuccessTabsBody": "{tabs} 자동 결제 성공, 30일 연장되었습니다.",
+  "@autoRenewSuccessTabsBody": {
+    "placeholders": {
+      "tabs": {}
+    }
+  },
+  "shareArticle": "공유",
+  "shareSheetTitle": "기사 공유",
+  "shareSheetShare": "앱으로 공유",
+  "shareSheetCopy": "복사하기",
+  "shareCopiedToast": "클립보드에 복사했습니다.",
+  "shareMessage": "이 뉴스 봤어?\n{title}\n{url}\n\n⚡ 전 세계 핵심 뉴스, 'SCOOP'에서 AI 번역, 요약으로 가장 빠르게 확인하세요.",
+  "@shareMessage": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "rateLimitToast": "업데이트 요청이 너무 많습니다. {seconds}초 후 다시 시도하세요.",
+  "@rateLimitToast": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "tokenStoreSubscriptionNote": "유료 탭 1개 이상 구독 시 광고 없이 무제한 번역 가능",
+  "subscribeTabPromptTitle": "키워드 탭을 구독하시겠습니까?",
+  "insufficientTokensPromptTitle": "토큰이 부족합니다",
+  "insufficientTokensPromptBody": "토큰 상점으로 이동하시겠습니까?",
+  "bannerSponsored": "스폰서",
+  "bannerHeadline": "맞춤형 뉴스 혜택을 확인하세요",
+  "bannerAdLabel": "광고",
+  "freeTranslationTitle": "무료 번역 안내",
+  "freeTranslationUsage": "무료 번역 {used}회 사용하여 {remaining}회 남았습니다",
+  "@freeTranslationUsage": {
+    "placeholders": {
+      "used": {
+        "type": "int"
+      },
+      "remaining": {
+        "type": "int"
+      }
+    }
+  },
+  "freeTranslationRemaining": "오늘 무료 번역 {count}회 남았습니다",
+  "@freeTranslationRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "freeTranslationExhausted": "오늘 무료 번역을 모두 사용했습니다",
+  "translationAdTitle": "광고",
+  "translationAdBody": "광고가 표시됩니다.",
+  "onboardingTitle1": "전 세계 뉴스를 한 손에",
+  "onboardingBody1": "관심 있는 키워드를 등록하세요.\n미국, 영국, 일본 등 원하는 국가의 주요 뉴스를 실시간으로 확인하세요.",
+  "onboardingTitle2": "바빠도 괜찮아요",
+  "onboardingBody2": "AI가 전 세계 뉴스를 실시간으로 요약해줍니다.\n긴 기사는 3줄로 요약하고, 해외 뉴스는 사용자의 언어로 번역합니다.",
+  "onboardingTitle3": "관심사를 구독하세요",
+  "onboardingBody3": "토큰을 모아 더 많은 키워드 탭을 열어보세요.\n비트코인, AI 등 원하는 키워드로 나만의 뉴스 피드를 만드세요.",
+  "onboardingSkip": "건너뛰기",
+  "onboardingNext": "다음",
+  "onboardingDone": "시작하기",
+  "privacyPolicyTitle": "개인정보처리방침",
+  "privacyPolicyButton": "개인정보처리방침 / 환불약관",
+  "accountDeletionTitle": "계정 탈퇴",
+  "privacyConsentTitle": "개인정보 동의",
+  "privacyConsentBody": "앱을 이용하려면 아래 필수 항목에 동의해야 합니다.",
+  "privacyConsentRequiredHint": "필수 항목에 모두 체크해야 동의할 수 있습니다.",
+  "privacyConsentPolicyLabel": "[필수] 개인정보처리방침 동의",
+  "privacyConsentOverseasLabel": "[필수] 개인정보 국외이전 동의 (Google/Firebase/AdMob 등)",
+  "privacyConsentDecline": "동의거부",
+  "privacyConsentAccept": "동의"
+}

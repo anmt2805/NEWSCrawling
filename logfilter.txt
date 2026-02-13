@@ -1,0 +1,4 @@
+﻿resource.type="cloud_run_revision"
+resource.labels.service_name="news-crawl-server"
+httpRequest.status=429
+httpRequest.requestUrl:"/news"

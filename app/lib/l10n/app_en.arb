@@ -1,0 +1,353 @@
+{
+  "@@locale": "en",
+  "tokensLabel": "Tokens : {count}",
+  "@tokensLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "breakingTab": "Breaking news",
+  "breakingTabShort": "Breaking",
+  "topBreakingHeadlines": "Top breaking headlines · {region}",
+  "@topBreakingHeadlines": {
+    "placeholders": {
+      "region": {
+        "type": "String"
+      }
+    }
+  },
+  "tapTitleToEditKeyword": "Tap title to edit keyword",
+  "noKeywordSet": "No keyword set for this tab.",
+  "setKeyword": "Set keyword",
+  "setKeywordForTab": "Set keyword for {tab}",
+  "@setKeywordForTab": {
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
+  },
+  "keywordHint": "e.g. AI, climate, bitcoin",
+  "cancel": "Cancel",
+  "save": "Save",
+  "breakingNewsFixed": "Breaking news is fixed.",
+  "fixedLabel": "Fixed: {label}",
+  "@fixedLabel": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "noKeyword": "No keyword",
+  "regionFilter": "Region filter",
+  "refresh": "Refresh",
+  "toggleTheme": "Toggle theme",
+  "regionSettingsTitle": "Article region",
+  "languageSettingsTitle": "App language",
+  "languageEnglish": "English",
+  "languageEnglishUk": "English (UK)",
+  "languageKorean": "Korean",
+  "languageJapanese": "Japanese",
+  "languageFrench": "French",
+  "languageSpanish": "Spanish",
+  "languageRussian": "Russian",
+  "languageArabic": "Arabic",
+  "notificationSettingsTitle": "Push notification settings",
+  "notificationsTitle": "Notifications",
+  "notificationsClear": "Clear",
+  "notificationsEmpty": "No notifications yet.",
+  "notificationsSeverity": "Severity",
+  "regionUnitedStates": "United States",
+  "regionUnitedKingdom": "United Kingdom",
+  "regionKorea": "South Korea",
+  "regionJapan": "Japan",
+  "regionFrance": "France",
+  "regionSpain": "Spain",
+  "regionRussia": "Russia",
+  "regionUnitedArabEmirates": "United Arab Emirates",
+  "regionAllCountries": "All countries",
+  "syncChoiceTitle": "Choose data to use",
+  "syncChoiceBody": "We found data saved on your account. Which data should we keep?",
+  "syncChoiceUseCloud": "Use account data",
+  "syncChoiceKeepLocal": "Keep this device",
+  "notificationBreakingTitle": "Breaking alerts",
+  "notificationBreakingSubtitle": "Critical alerts only",
+  "notificationKeywordTitle": "Keyword alerts",
+  "notificationSeverity4": "Severity 4",
+  "notificationSeverity5": "Severity 5",
+  "notificationSeverity4Label": "High",
+  "notificationSeverity5Label": "Critical",
+  "exitConfirmTitle": "Exit app?",
+  "exitConfirmBody": "Do you want to close the app?",
+  "exitConfirmNo": "No",
+  "exitConfirmYes": "Yes",
+  "loginRequiredTitle": "Sign-in required",
+  "loginRequiredBody": "Sign in to purchase tabs or tokens.",
+  "loginFailedTitle": "Sign-in failed",
+  "loginFailedBody": "Google sign-in failed. Please try again.",
+  "purchaseLockedTitle": "Unlock in order",
+  "purchaseLockedBody": "Please unlock the previous tab first.",
+  "insufficientTokensTitle": "Not enough tokens",
+  "insufficientTokensBody": "You need more tokens to purchase this tab.",
+  "openTokenStore": "Open token store",
+  "noThanks": "No",
+  "confirm": "OK",
+  "confirmPurchase": "Purchase",
+  "purchaseTabTitle": "Purchase tab {tab}",
+  "@purchaseTabTitle": {
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
+  },
+  "purchaseTabBody": "{cost} tokens for 30 days. Proceed?",
+  "@purchaseTabBody": {
+    "placeholders": {
+      "cost": {
+        "type": "int"
+      }
+    }
+  },
+  "tabPurchaseLedger": "Tab {tab} purchase",
+  "@tabPurchaseLedger": {
+    "placeholders": {
+      "tab": {
+        "type": "String"
+      }
+    }
+  },
+  "tokenPurchaseLedger": "Token purchase +{count} ({price})",
+  "@tokenPurchaseLedger": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "tokensBalanceLabel": "Balance: {count}",
+  "@tokensBalanceLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tabUsageTitle": "Tab access",
+  "tabLabelWithIndex": "Tab {label}",
+  "@tabLabelWithIndex": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "tabRemainingLabel": "Remaining {time}",
+  "@tabRemainingLabel": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "tabLockedLabel": "Locked",
+  "tokenHistoryTitle": "Token history",
+  "notSignedIn": "Not signed in",
+  "signOut": "Sign out",
+  "noArticlesFound": "Updates automatically at regular intervals.",
+  "failedToLoadNews": "Failed to load news.",
+  "summaryUnavailable": "Summary unavailable.",
+  "failedToLoadArticle": "Failed to load article.",
+  "noArticleContent": "No article content.",
+  "translationOn": "Translation on",
+  "originalOn": "Original on",
+  "contentUnavailable": "Content unavailable.",
+  "translateFullArticle": "Translate full article",
+  "translating": "Translating...",
+  "openOriginal": "Open original",
+  "openOriginalArticle": "Open original article",
+  "summarySettingsTitle": "Summary settings",
+  "summaryLengthLabel": "Summary length",
+  "summaryShort": "Short",
+  "summaryMedium": "Medium",
+  "summaryLong": "Long",
+  "summaryFull": "Full text (no summary)",
+  "summarySave": "Save",
+  "summaryLimitedNotice": "This article cannot be fully viewed in the app. Please open the link below to read it.",
+  "translationLongContentNotice": "The original text is too long. A summarized translation is shown.",
+  "urgentBadge": "Urgent",
+  "translatingBadge": "AI processing",
+  "processingEtaMinutes": "about {minutes} min",
+  "@processingEtaMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "signInWithGoogle": "Sign in with Google",
+  "tapToConnectAccount": "Tap below to connect your account.",
+  "googleAccount": "Google Account",
+  "connectSync": "Connect to sync keywords and tokens across devices.",
+  "continueWithGoogle": "Continue with Google",
+  "tokensStore": "Tokens Store",
+  "reportArticle": "Report article",
+  "blockSource": "Block this source",
+  "blockedSourceToast": "Source blocked.",
+  "blockedSourcesTitle": "Blocked sources",
+  "blockedSourcesEmpty": "No blocked sources.",
+  "unblockSource": "Unblock",
+  "unblockedSourceToast": "Source unblocked.",
+  "reportedArticleToast": "Report submitted.",
+  "tokenPackLabel": "{count} Tokens",
+  "@tokenPackLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "perTokenPrice": "{price} per token",
+  "@perTokenPrice": {
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "language": "Language",
+  "retry": "Retry",
+  "settingsTitle": "Settings",
+  "settingsAppearanceTitle": "Appearance",
+  "contactSupport": "Contact support",
+  "reviewPromptTitle": "Enjoying SCOOP?",
+  "reviewPromptBody": "How would you rate the app?",
+  "reviewPromptLater": "Later",
+  "reviewPromptContinue": "Continue",
+  "reviewHighTitle": "Thanks!",
+  "reviewHighBody": "Would you like to leave a review on the store?",
+  "reviewWriteAction": "Write a review",
+  "reviewLowTitle": "Send feedback",
+  "reviewLowBody": "Tell us what we can improve.",
+  "bannedTitle": "Account suspended",
+  "bannedBody": "This account has been suspended. If you believe this is a mistake, please contact support.",
+  "developerEmailTitle": "Developer email",
+  "savedArticlesTitle": "Saved articles",
+  "savedArticlesEmpty": "No saved articles yet.",
+  "saveArticle": "Save",
+  "removeSaved": "Remove",
+  "autoRenewTitle": "Auto renewal",
+  "autoRenewSubtitle": "Charge 2 tokens 1 hour before expiry",
+  "ledgerPurchase": "Token top-up",
+  "ledgerSpend": "Tab purchase",
+  "ledgerAutoRenew": "Auto renewal",
+  "ledgerSpendWithTab": "Tab purchase · {tab}",
+  "@ledgerSpendWithTab": {
+    "placeholders": {
+      "tab": {}
+    }
+  },
+  "ledgerAutoRenewWithTab": "Auto renewal · {tab}",
+  "@ledgerAutoRenewWithTab": {
+    "placeholders": {
+      "tab": {}
+    }
+  },
+  "autoRenewConfirmTitle": "Enable auto renewal?",
+  "autoRenewConfirmBody": "We will charge 2 tokens 1 hour before expiry to keep tabs active.",
+  "autoRenewConfirmEnable": "Enable",
+  "autoRenewFailedTitle": "Auto renewal failed",
+  "autoRenewFailedBody": "Auto renewal failed due to insufficient tokens.",
+  "autoRenewSuccessTitle": "Auto renewal success",
+  "autoRenewSuccessBody": "{count} tabs renewed for 30 more days.",
+  "@autoRenewSuccessBody": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "autoRenewSuccessTabsBody": "{tabs} auto renewal succeeded and extended 30 days.",
+  "@autoRenewSuccessTabsBody": {
+    "placeholders": {
+      "tabs": {}
+    }
+  },
+  "shareArticle": "Share",
+  "shareSheetTitle": "Share news",
+  "shareSheetShare": "Share to app",
+  "shareSheetCopy": "Copy",
+  "shareCopiedToast": "Copied to clipboard.",
+  "shareMessage": "Seen this news?\n{title}\n{url}\n\n⚡ Get the world’s top stories faster with AI translation and summaries on 'SCOOP'.",
+  "@shareMessage": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "rateLimitToast": "Too many update requests. Try again in {seconds}s.",
+  "@rateLimitToast": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "tokenStoreSubscriptionNote": "Subscribe to at least one paid tab for unlimited translations without ads.",
+  "subscribeTabPromptTitle": "Subscribe to this keyword tab?",
+  "insufficientTokensPromptTitle": "Not enough tokens",
+  "insufficientTokensPromptBody": "Go to the token store?",
+  "bannerSponsored": "Sponsored",
+  "bannerHeadline": "Discover personalized news benefits",
+  "bannerAdLabel": "Ad",
+  "freeTranslationTitle": "Free translations",
+  "freeTranslationUsage": "You used {used} free translations; {remaining} left today.",
+  "@freeTranslationUsage": {
+    "placeholders": {
+      "used": {
+        "type": "int"
+      },
+      "remaining": {
+        "type": "int"
+      }
+    }
+  },
+  "freeTranslationRemaining": "You have {count} free translations left today.",
+  "@freeTranslationRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "freeTranslationExhausted": "You have used all free translations today.",
+  "translationAdTitle": "Ad",
+  "translationAdBody": "An ad is being shown.",
+  "onboardingTitle1": "All the world’s news in your hand",
+  "onboardingBody1": "Set the keywords you care about.\nSee major news in real time from the U.S., UK, Japan, and more.",
+  "onboardingTitle2": "No time? You’re covered",
+  "onboardingBody2": "AI summarizes long articles in 3 lines and translates global news into your language.",
+  "onboardingTitle3": "Subscribe to your interests",
+  "onboardingBody3": "Collect tokens to unlock more keyword tabs and build your own news feed.",
+  "onboardingSkip": "Skip",
+  "onboardingNext": "Next",
+  "onboardingDone": "Get started",
+  "privacyPolicyTitle": "Privacy Policy",
+  "privacyPolicyButton": "Privacy Policy / Refund Terms",
+  "accountDeletionTitle": "Delete account",
+  "privacyConsentTitle": "Privacy Consent",
+  "privacyConsentBody": "To use the app, you must agree to the required items below.",
+  "privacyConsentRequiredHint": "Please check all required items to continue.",
+  "privacyConsentPolicyLabel": "[Required] Agree to Privacy Policy",
+  "privacyConsentOverseasLabel": "[Required] Agree to overseas transfer of personal data (Google/Firebase/AdMob)",
+  "privacyConsentDecline": "Decline",
+  "privacyConsentAccept": "Agree"
+}

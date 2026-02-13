@@ -1,0 +1,28 @@
+﻿# secrets
+env.yaml
+cors.env
+gcp-server-sa-key.json
+*firebase-adminsdk*.json
+OPEN AI API KEY.txt
+*.pem
+*.key
+
+# local/firebase
+.firebase/
+firebase-debug.log
+
+# temp logs
+tmp_*.json
+tmp_*.xml
+tmp_*.html
+
+# flutter
+app/.dart_tool/
+app/build/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.packages
+app/android/.gradle/
+
+# node
+server/node_modules/
