@@ -2186,6 +2186,9 @@ class _NewsHomePageState extends State<NewsHomePage>
   int _prefetchPollRemaining = 0;
   static const int _prefetchPollAttempts = 3;
   static const Duration _prefetchPollInterval = Duration(seconds: 4);
+  static const Duration _breakingActivateCooldown = Duration(minutes: 3);
+  String _breakingActivateLastKey = '';
+  int _breakingActivateLastAtMs = 0;
   Timer? _processingPollTimer;
   int _processingPollRemaining = 0;
   static const int _processingPollAttempts = 5;
@@ -4936,7 +4939,6 @@ class _NewsHomePageState extends State<NewsHomePage>
     final savedRaw = prefs.getString('savedArticles');
     final blockedRaw = prefs.getString('blockedDomains');
     final reportedRaw = prefs.getString('reportedUrls');
-    final langHistoryRaw = prefs.getStringList(_notificationLangHistoryKey);
     setState(() {
       final loadedKeywords = List<String>.filled(_tabs.length, '');
       if (stored != null && stored.isNotEmpty) {
@@ -5063,15 +5065,11 @@ class _NewsHomePageState extends State<NewsHomePage>
       }
       _notificationLangs
         ..clear()
-        ..addAll(
-          (langHistoryRaw ?? const <String>[]).map(
-            (lang) => _topicLangCode(lang),
-          ),
-        );
-      _notificationLangs.add(_topicLangCode(_language));
+        ..add(_topicLangCode(_language));
       _loading = false;
     });
     await _refreshCanonicalKeywords();
+    await _updateNotificationLangHistory();
     await _syncTopicSubscriptions();
     await _applyAutoRenewOnServer();
     await _pruneExpiredTabs(syncServer: false);
@@ -5079,9 +5077,9 @@ class _NewsHomePageState extends State<NewsHomePage>
 
   Future<void> _updateNotificationLangHistory() async {
     final langKey = _topicLangCode(_language);
-    if (!_notificationLangs.add(langKey)) {
-      return;
-    }
+    _notificationLangs
+      ..clear()
+      ..add(langKey);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(
       _notificationLangHistoryKey,
@@ -5320,6 +5318,33 @@ class _NewsHomePageState extends State<NewsHomePage>
     );
     if (task == null) return;
     await _requestCachePrefetch([task], reason: 'breaking_region_change');
+  }
+
+  Future<Map<String, dynamic>?> _activateBreakingTabOnDemand({
+    bool force = false,
+  }) async {
+    final region = _regionForTab(0).toUpperCase();
+    final lang = _language;
+    final feedLang = _regionNewsLang[region] ?? lang;
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final key = '$region::$feedLang::$lang';
+    if (!force &&
+        key == _breakingActivateLastKey &&
+        nowMs - _breakingActivateLastAtMs <
+            _breakingActivateCooldown.inMilliseconds) {
+      return null;
+    }
+    _breakingActivateLastKey = key;
+    _breakingActivateLastAtMs = nowMs;
+    final payload = await _postJson('/breaking/activate', {
+      'region': region,
+      'lang': lang,
+      'feedLang': feedLang,
+      'limit': 20,
+    }, withAuth: false);
+    final status = int.tryParse(payload?['statusCode']?.toString() ?? '') ?? 0;
+    if (status < 200 || status >= 300) return null;
+    return payload;
   }
 
   Future<Map<String, dynamic>> _setKeywordSubscription(
@@ -5804,6 +5829,18 @@ class _NewsHomePageState extends State<NewsHomePage>
     await _saveLocalState();
     await _saveUserStateToFirestore();
     await _syncTopicSubscriptions();
+    if (safeIndex == 0 && previousRegion != nextRegion) {
+      final activateResult = await _activateBreakingTabOnDemand(force: true);
+      final hasCache = activateResult?['hasCache'] == true;
+      if (!hasCache) {
+        Future<void>.delayed(const Duration(seconds: 2), () {
+          if (!mounted) return;
+          if (_currentIndex != 0) return;
+          if (_regionForTab(0) != nextRegion) return;
+          _triggerAutoRefresh();
+        });
+      }
+    }
   }
 
   void _showRegionDialog() {
@@ -6657,6 +6694,13 @@ class _NewsHomePageState extends State<NewsHomePage>
                           onItemsLoaded: (items) {
                             _handleItemsLoaded(safeIndex, items);
                           },
+                          onManualRefresh: safeIndex == 0
+                              ? () async {
+                                  await _activateBreakingTabOnDemand(
+                                    force: true,
+                                  );
+                                }
+                              : null,
                           isSaved: _isArticleSaved,
                           onToggleSave: _toggleSaveArticle,
                           onReport: _reportArticle,
@@ -6771,6 +6815,7 @@ class NewsList extends StatefulWidget {
     required this.blockedDomains,
     this.onCanonicalResolved,
     this.onItemsLoaded,
+    this.onManualRefresh,
     this.isSaved,
     this.onToggleSave,
     this.onReport,
@@ -6787,6 +6832,7 @@ class NewsList extends StatefulWidget {
   final Set<String> blockedDomains;
   final ValueChanged<String>? onCanonicalResolved;
   final ValueChanged<List<NewsItem>>? onItemsLoaded;
+  final Future<void> Function()? onManualRefresh;
   final bool Function(NewsItem)? isSaved;
   final Future<void> Function(NewsItem)? onToggleSave;
   final Future<void> Function(NewsItem)? onReport;
@@ -6820,6 +6866,7 @@ class _NewsListState extends State<NewsList> {
   bool _isLoadingMore = false;
   bool _hasMore = true;
   bool _isSoftRefresh = false;
+  bool _pullRefreshInProgress = false;
   static const int _bannerInterval = 6;
   static const int _processingEtaStartMinutes = 7;
   static const Duration _processingEtaTick = Duration(minutes: 1);
@@ -6958,6 +7005,9 @@ class _NewsListState extends State<NewsList> {
         _future = _fetchNews();
       });
     } else if (oldWidget.softRefreshToken != widget.softRefreshToken) {
+      if (_pullRefreshInProgress) {
+        return;
+      }
       setState(() {
         _isSoftRefresh = true;
         _refreshSeed = DateTime.now().millisecondsSinceEpoch;
@@ -7143,16 +7193,25 @@ class _NewsListState extends State<NewsList> {
   }
 
   Future<void> _refresh() async {
-    setState(() {
-      _isSoftRefresh = true;
-      _refreshSeed = DateTime.now().millisecondsSinceEpoch;
-      _currentLimit = widget.limit;
-      _hasMore = true;
-      _future = _fetchNews();
-    });
     try {
+      _pullRefreshInProgress = true;
+      if (widget.onManualRefresh != null) {
+        try {
+          await widget.onManualRefresh!();
+        } catch (_) {}
+      }
+      setState(() {
+        _isSoftRefresh = true;
+        _refreshSeed = DateTime.now().millisecondsSinceEpoch;
+        _currentLimit = widget.limit;
+        _hasMore = true;
+        _future = _fetchNews();
+      });
       await _future;
-    } catch (_) {}
+    } catch (_) {
+    } finally {
+      _pullRefreshInProgress = false;
+    }
   }
 
   List<NewsItem> _filterBlocked(List<NewsItem> items) {

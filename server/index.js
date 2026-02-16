@@ -278,6 +278,16 @@ const PROCESSING_DURATION_SMOOTHING = Math.min(
       0.35
   )
 );
+const PROCESSING_RECOVERY_TRIGGER_MS = Math.max(
+  60 * 1000,
+  parseInt(process.env.PROCESSING_RECOVERY_TRIGGER_MS || "600000", 10) ||
+    600000
+);
+const PROCESSING_RECOVERY_COOLDOWN_MS = Math.max(
+  60 * 1000,
+  parseInt(process.env.PROCESSING_RECOVERY_COOLDOWN_MS || "180000", 10) ||
+    180000
+);
 const SERVICE_URL = process.env.SERVICE_URL || "";
 const RTDN_PUSH_AUDIENCE =
   process.env.RTDN_PUSH_AUDIENCE ||
@@ -408,6 +418,7 @@ const apiLimiter = rateLimit({
 app.use("/news", apiLimiter);
 app.use("/article", apiLimiter);
 app.use("/cache/prefetch", apiLimiter);
+app.use("/breaking/activate", apiLimiter);
 
 app.get("/time", (req, res) => {
   res.json({ ok: true, serverTimeMs: Date.now() });
@@ -1374,6 +1385,7 @@ const googleNewsResolveCache = new LRUCache({
   ttl: 1000 * 60 * 60 * 12
 });
 const hostThrottleState = new Map();
+const processingRecoveryCooldown = new Map();
 const severityCache = new LRUCache({ max: 2000, ttl: 1000 * 60 * 60 * 6 });
 const canonicalCache = new LRUCache({ max: 2000, ttl: 1000 * 60 * 60 * 12 });
 const alertCache = new LRUCache({ max: 2000, ttl: 1000 * 60 * 60 * 24 });
@@ -7045,8 +7057,65 @@ async function consumeScheduledSkipOnce(tasks = []) {
 }
 
 async function hasCachedItemsForTask(task = {}) {
+  const cacheState = await getTaskCacheState(task);
+  return cacheState.exists;
+}
+
+function summarizeTaskCachedItems(items = [], nowMs = Date.now()) {
+  const safeItems = Array.isArray(items) ? items : [];
+  if (!safeItems.length) {
+    return {
+      exists: false,
+      count: 0,
+      hasProcessing: false,
+      hasProcessed: false,
+      onlyProcessing: false,
+      processingAgeMs: null
+    };
+  }
+  let hasProcessing = false;
+  let hasProcessed = false;
+  let oldestProcessingMs = null;
+  for (const item of safeItems) {
+    if (!item) continue;
+    if (item.processing) {
+      hasProcessing = true;
+      const startedAtIso = parseDateIso(item.processingStartedAt);
+      const startedAtMs = Date.parse(startedAtIso || "");
+      if (Number.isFinite(startedAtMs)) {
+        if (oldestProcessingMs === null || startedAtMs < oldestProcessingMs) {
+          oldestProcessingMs = startedAtMs;
+        }
+      }
+    } else {
+      hasProcessed = true;
+    }
+  }
+  const processingAgeMs =
+    oldestProcessingMs === null ? null : Math.max(0, nowMs - oldestProcessingMs);
+  return {
+    exists: safeItems.length > 0,
+    count: safeItems.length,
+    hasProcessing,
+    hasProcessed,
+    onlyProcessing: hasProcessing && !hasProcessed,
+    processingAgeMs
+  };
+}
+
+async function getTaskCacheState(task = {}) {
   const identity = normalizeCrawlTaskIdentity(task);
-  if (!identity) return false;
+  if (!identity) {
+    return {
+      identity: null,
+      exists: false,
+      count: 0,
+      hasProcessing: false,
+      hasProcessed: false,
+      onlyProcessing: false,
+      processingAgeMs: null
+    };
+  }
   const cacheId = makeNewsCacheId(
     identity.keyword,
     identity.region,
@@ -7055,18 +7124,85 @@ async function hasCachedItemsForTask(task = {}) {
     20
   );
   const cachedMeta = await getCachedNewsMeta(cacheId);
-  if (!cachedMeta || !Array.isArray(cachedMeta.data?.items)) {
-    return false;
+  const cachedItems =
+    cachedMeta && Array.isArray(cachedMeta.data?.items) ? cachedMeta.data.items : [];
+  return {
+    identity,
+    ...summarizeTaskCachedItems(cachedItems)
+  };
+}
+
+function isProcessingRecoveryCoolingDown(identityKey, nowMs = Date.now()) {
+  if (!identityKey) return false;
+  const coolingUntilMs = Number(processingRecoveryCooldown.get(identityKey) || 0);
+  return Number.isFinite(coolingUntilMs) && coolingUntilMs > nowMs;
+}
+
+function markProcessingRecoveryQueued(identityKey, nowMs = Date.now()) {
+  if (!identityKey) return;
+  processingRecoveryCooldown.set(
+    identityKey,
+    nowMs + PROCESSING_RECOVERY_COOLDOWN_MS
+  );
+  if (processingRecoveryCooldown.size <= 500) return;
+  for (const [key, coolingUntilMs] of processingRecoveryCooldown.entries()) {
+    if (!Number.isFinite(coolingUntilMs) || coolingUntilMs <= nowMs) {
+      processingRecoveryCooldown.delete(key);
+    }
   }
-  return cachedMeta.data.items.length > 0;
+}
+
+async function enqueueProcessingRecoveryIfNeeded(task = {}, req, options = {}) {
+  const identity = normalizeCrawlTaskIdentity(task);
+  if (!identity) return { ok: false, reason: "invalid_task" };
+  const nowMs = Date.now();
+  if (isProcessingRecoveryCoolingDown(identity.key, nowMs)) {
+    return { ok: false, reason: "cooldown" };
+  }
+  const cacheSummary = summarizeTaskCachedItems(options.items, nowMs);
+  const cacheState = cacheSummary.exists
+    ? { identity, ...cacheSummary }
+    : await getTaskCacheState(identity);
+  if (!cacheState.onlyProcessing) {
+    return { ok: false, reason: "not_processing_only", cacheState };
+  }
+  if (
+    !Number.isFinite(cacheState.processingAgeMs) ||
+    cacheState.processingAgeMs < PROCESSING_RECOVERY_TRIGGER_MS
+  ) {
+    return { ok: false, reason: "processing_recent", cacheState };
+  }
+  const queued = await enqueueCrawlTasks(
+    [
+      {
+        keyword: identity.keyword,
+        canonicalKeyword: identity.keyword,
+        region: identity.region,
+        feedLang: identity.feedLang,
+        lang: identity.lang,
+        limit: 20
+      }
+    ],
+    req
+  );
+  if (queued.ok && queued.enqueued > 0) {
+    markProcessingRecoveryQueued(identity.key, nowMs);
+    await markSkipNextScheduledCrawl(identity, {
+      reason: "processing_recovery"
+    });
+    return { ok: true, reason: "queued", cacheState };
+  }
+  return { ok: false, reason: queued.error || "enqueue_failed", cacheState };
 }
 
 async function canRunFastModeFallback(task = {}) {
   const db = getFirestore();
   const identity = normalizeCrawlTaskIdentity(task);
   if (!identity) return { ok: false, reason: "invalid_task" };
-  const hasCache = await hasCachedItemsForTask(identity);
-  if (hasCache) return { ok: false, reason: "cache_exists" };
+  const cacheState = await getTaskCacheState(identity);
+  if (cacheState.exists) {
+    return { ok: false, reason: "cache_exists", cacheState };
+  }
   if (!db) return { ok: true, reason: "no_firestore" };
 
   const docId = makeCrawlSkipOnceDocId(identity);
@@ -9756,6 +9892,123 @@ app.post("/cache/prefetch", async (req, res) => {
   }
 });
 
+app.post("/breaking/activate", async (req, res) => {
+  try {
+    const region = normalizeRegionCode(req.body?.region || "ALL", "ALL");
+    const lang = normalizeLangCode(req.body?.lang || "en");
+    const feedLang = normalizeLangCode(
+      req.body?.feedLang || REGION_FEED_LANG[region] || lang
+    );
+    const limit = Math.min(
+      20,
+      Math.max(1, parseInt(req.body?.limit || "20", 10) || 20)
+    );
+    const task = {
+      keyword: BREAKING_KEYWORD,
+      canonicalKeyword: BREAKING_KEYWORD,
+      region,
+      lang,
+      feedLang,
+      limit
+    };
+    const cacheState = await getTaskCacheState(task);
+    const shouldQueueOnDemand =
+      !cacheState.exists ||
+      (cacheState.onlyProcessing &&
+        Number.isFinite(cacheState.processingAgeMs) &&
+        cacheState.processingAgeMs >= PROCESSING_RECOVERY_TRIGGER_MS);
+    let onDemandQueued = false;
+    let onDemandReason = shouldQueueOnDemand ? "cache_empty" : "cache_exists";
+    let processingRecoveryQueued = false;
+    if (shouldQueueOnDemand) {
+      try {
+        const queued = await enqueueCrawlTasks([task], req);
+        if (queued.ok && queued.enqueued > 0) {
+          onDemandQueued = true;
+          if (cacheState.onlyProcessing) {
+            onDemandReason = "processing_recovery";
+            processingRecoveryQueued = true;
+            if (cacheState.identity?.key) {
+              markProcessingRecoveryQueued(cacheState.identity.key);
+            }
+          }
+          await markSkipNextScheduledCrawl(task, {
+            reason: `breaking_activate_${onDemandReason}`
+          });
+        } else {
+          onDemandReason = queued.error || "enqueue_failed";
+        }
+      } catch (error) {
+        onDemandReason = "enqueue_failed";
+        console.error(
+          "[BreakingActivate] enqueue failed",
+          error?.message || error
+        );
+      }
+    }
+
+    let fastModeFallbackRan = false;
+    let fastModeFallbackReason = "";
+    if (!cacheState.exists) {
+      const refreshTimeoutMs = Math.max(60000, TASK_TIMEOUT_MS * 6);
+      try {
+        const fastModeDecision = await canRunFastModeFallback(task);
+        fastModeFallbackReason = fastModeDecision.reason || "";
+        if (fastModeDecision.ok) {
+          await runWithTimeout(
+            () =>
+              refreshNewsCacheFromSource({
+                keyword: BREAKING_KEYWORD,
+                canonicalKeyword: BREAKING_KEYWORD,
+                lang,
+                feedLang,
+                region,
+                limit,
+                skipPush: true,
+                fastMode: true
+              }),
+            refreshTimeoutMs,
+            "breaking_fastmode_activate"
+          );
+          fastModeFallbackRan = true;
+          await markFastModeFallbackTriggered(task, {
+            reason: "breaking_activate_cache_empty"
+          });
+        }
+      } catch (error) {
+        console.error(
+          "[BreakingActivate] fastMode fallback failed",
+          error?.message || error
+        );
+      }
+    } else {
+      fastModeFallbackReason = "cache_exists";
+    }
+
+    return res.json({
+      ok: true,
+      keyword: BREAKING_KEYWORD,
+      region,
+      lang,
+      feedLang,
+      hasCache: cacheState.exists,
+      cacheOnlyProcessing: cacheState.onlyProcessing,
+      cacheProcessingAgeMs: cacheState.processingAgeMs,
+      onDemandQueued,
+      onDemandReason,
+      processingRecoveryQueued,
+      fastModeFallbackRan,
+      fastModeFallbackReason
+    });
+  } catch (error) {
+    console.error("[BreakingActivate] failed", error?.message || error);
+    return res.status(500).json({
+      ok: false,
+      error: "breaking_activate_failed"
+    });
+  }
+});
+
 app.get("/saved_articles", async (req, res) => {
   const user = await getVerifiedUser(req, res);
   if (!user) return;
@@ -10808,6 +11061,35 @@ app.get("/news", async (req, res) => {
       if (items && items.length > limit) {
         items = items.slice(0, limit);
       }
+    }
+
+    if (items && items.length && items.some((item) => item?.processing)) {
+      enqueueProcessingRecoveryIfNeeded(
+        {
+          keyword: canonicalKeyword,
+          canonicalKeyword,
+          region,
+          lang,
+          feedLang,
+          limit: 20
+        },
+        req,
+        { items }
+      )
+        .then((result) => {
+          if (result?.ok && result.reason === "queued") {
+            console.log(
+              `[News] processing recovery queued ${canonicalKeyword} ${region}/${lang} feed=${feedLang}`
+            );
+          }
+        })
+        .catch((error) => {
+          console.error(
+            "[News] processing recovery failed",
+            canonicalKeyword,
+            error?.message || error
+          );
+        });
     }
 
     const payload = {

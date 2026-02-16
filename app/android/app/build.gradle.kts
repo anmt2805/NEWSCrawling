@@ -42,6 +42,8 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        // Keep only app-supported locales in packaged Android resources to reduce AAB size.
+        resourceConfigurations.addAll(listOf("en", "ko", "ja", "fr", "es", "ru", "ar"))
     }
 
     signingConfigs {
