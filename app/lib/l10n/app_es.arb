@@ -223,6 +223,7 @@
   },
   "language": "Idioma",
   "retry": "Reintentar",
+  "purchaseFailedCheckPayment": "La compra falló. Verifica si la compra está disponible y el método de pago, y vuelve a intentarlo.",
   "settingsTitle": "Configuración",
   "settingsAppearanceTitle": "Apariencia",
   "contactSupport": "Contactar soporte",

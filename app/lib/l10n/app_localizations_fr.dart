@@ -414,6 +414,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get retry => 'Réessayer';
 
   @override
+  String get purchaseFailedCheckPayment =>
+      'L\'achat a échoué. Vérifiez la disponibilité de l\'achat et votre moyen de paiement, puis réessayez.';
+
+  @override
   String get settingsTitle => 'Paramètres';
 
   @override

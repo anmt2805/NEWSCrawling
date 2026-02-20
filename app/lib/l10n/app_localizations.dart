@@ -840,6 +840,12 @@ abstract class AppLocalizations {
   /// **'Retry'**
   String get retry;
 
+  /// No description provided for @purchaseFailedCheckPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase failed. Please check purchase availability and payment method, then try again.'**
+  String get purchaseFailedCheckPayment;
+
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:

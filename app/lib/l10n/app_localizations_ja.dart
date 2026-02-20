@@ -403,6 +403,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get retry => '再試行';
 
   @override
+  String get purchaseFailedCheckPayment =>
+      '購入に失敗しました。購入可否と支払い方法を確認して、再度お試しください。';
+
+  @override
   String get settingsTitle => '設定';
 
   @override

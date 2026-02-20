@@ -404,6 +404,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get retry => '다시 시도';
 
   @override
+  String get purchaseFailedCheckPayment =>
+      '결제에 실패했습니다. 결제 가능 여부 및 결제 수단 확인 후 다시 결제해주세요.';
+
+  @override
   String get settingsTitle => '설정';
 
   @override

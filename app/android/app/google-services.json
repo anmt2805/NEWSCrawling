@@ -38,6 +38,14 @@
           }
         },
         {
+          "client_id": "442218050266-msfcg5uf8s7cfuniuoarpkcv6kdq5ulp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.anmt2805.news_crawl",
+            "certificate_hash": "b456735231c284cdc88535936fdf5a771478fc3a"
+          }
+        },
+        {
           "client_id": "442218050266-7t8egh8fpn4jvq1vhqs1kn8bdlhmocro.apps.googleusercontent.com",
           "client_type": 3
         }

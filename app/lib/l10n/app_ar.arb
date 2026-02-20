@@ -223,6 +223,7 @@
   },
   "language": "اللغة",
   "retry": "إعادة المحاولة",
+  "purchaseFailedCheckPayment": "فشلت عملية الشراء. تحقّق من إمكانية الشراء ووسيلة الدفع ثم حاول مرة أخرى.",
   "settingsTitle": "الإعدادات",
   "settingsAppearanceTitle": "المظهر",
   "contactSupport": "الاتصال بالدعم",

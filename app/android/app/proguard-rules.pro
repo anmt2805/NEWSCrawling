@@ -13,3 +13,9 @@
 -dontwarn com.squareup.okhttp.ConnectionSpec
 -dontwarn com.squareup.okhttp.TlsVersion
 -dontwarn java.lang.reflect.AnnotatedType
+
+# ONE store IAP SDK
+-keep class com.gaa.sdk.base.** { *; }
+-keep class com.gaa.sdk.auth.** { *; }
+-keep class com.gaa.sdk.iap.** { *; }
+-keep class com.onestore.extern.licensing.** { *; }

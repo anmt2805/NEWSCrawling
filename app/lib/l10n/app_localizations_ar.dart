@@ -408,6 +408,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get retry => 'إعادة المحاولة';
 
   @override
+  String get purchaseFailedCheckPayment =>
+      'فشلت عملية الشراء. تحقّق من إمكانية الشراء ووسيلة الدفع ثم حاول مرة أخرى.';
+
+  @override
   String get settingsTitle => 'الإعدادات';
 
   @override

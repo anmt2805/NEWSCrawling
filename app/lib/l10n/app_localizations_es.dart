@@ -412,6 +412,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get retry => 'Reintentar';
 
   @override
+  String get purchaseFailedCheckPayment =>
+      'La compra falló. Verifica si la compra está disponible y el método de pago, y vuelve a intentarlo.';
+
+  @override
   String get settingsTitle => 'Configuración';
 
   @override

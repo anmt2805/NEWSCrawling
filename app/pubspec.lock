@@ -355,6 +355,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_onestore_inapp:
+    dependency: "direct main"
+    description:
+      name: flutter_onestore_inapp
+      sha256: c8aa01c31d9950862f7d4f8b312f746c078a509f1fae64bb3bcb7d1342556b3a
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.2"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -826,6 +834,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.0"
+  unity_ads_plugin:
+    dependency: "direct main"
+    description:
+      name: unity_ads_plugin
+      sha256: f35ddd27a3323a462a2ccf20721da99a0b13a4335f11a0cdadbb03db1d17a57b
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.28"
   url_launcher:
     dependency: "direct main"
     description:

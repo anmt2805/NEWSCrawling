@@ -223,6 +223,7 @@
   },
   "language": "言語",
   "retry": "再試行",
+  "purchaseFailedCheckPayment": "購入に失敗しました。購入可否と支払い方法を確認して、再度お試しください。",
   "settingsTitle": "設定",
   "settingsAppearanceTitle": "外観",
   "contactSupport": "お問い合わせ",

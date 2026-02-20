@@ -223,6 +223,7 @@
   },
   "language": "Langue",
   "retry": "Réessayer",
+  "purchaseFailedCheckPayment": "L'achat a échoué. Vérifiez la disponibilité de l'achat et votre moyen de paiement, puis réessayez.",
   "settingsTitle": "Paramètres",
   "settingsAppearanceTitle": "Apparence",
   "contactSupport": "Contacter l’assistance",

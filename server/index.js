@@ -174,6 +174,41 @@ const ANDROID_PUBLISHER_CREDENTIALS_JSON =
 const ANDROID_PUBLISHER_CREDENTIALS_PATH =
   process.env.ANDROID_PUBLISHER_CREDENTIALS_PATH || "";
 const IAP_PRODUCT_MAP_RAW = process.env.IAP_PRODUCT_MAP || "";
+const PLAY_IAP_PRODUCT_MAP_RAW = process.env.PLAY_IAP_PRODUCT_MAP || "";
+const ONESTORE_IAP_PRODUCT_MAP_RAW =
+  process.env.ONESTORE_IAP_PRODUCT_MAP || "";
+const ONESTORE_CLIENT_ID = process.env.ONESTORE_CLIENT_ID || "";
+const ONESTORE_CLIENT_SECRET = process.env.ONESTORE_CLIENT_SECRET || "";
+const ONESTORE_API_BASE_URL = (
+  process.env.ONESTORE_API_BASE_URL || "https://iap-apis.onestore.net"
+)
+  .trim()
+  .replace(/\/+$/, "");
+const ONESTORE_API_TIMEOUT_MS = Math.max(
+  3000,
+  parseInt(process.env.ONESTORE_API_TIMEOUT_MS || "10000", 10) || 10000
+);
+const ONESTORE_REFUND_RECONCILE_BATCH = Math.max(
+  5,
+  Math.min(
+    200,
+    parseInt(process.env.ONESTORE_REFUND_RECONCILE_BATCH || "25", 10) || 25
+  )
+);
+const ONESTORE_REFUND_RECHECK_INTERVAL_MINUTES = Math.max(
+  5,
+  parseInt(process.env.ONESTORE_REFUND_RECHECK_INTERVAL_MINUTES || "120", 10) ||
+    120
+);
+const ONESTORE_REFUND_MIN_PURCHASE_AGE_MINUTES = Math.max(
+  1,
+  parseInt(process.env.ONESTORE_REFUND_MIN_PURCHASE_AGE_MINUTES || "10", 10) ||
+    10
+);
+const ONESTORE_REFUND_RECONCILE_MAX_AGE_DAYS = Math.max(
+  1,
+  parseInt(process.env.ONESTORE_REFUND_RECONCILE_MAX_AGE_DAYS || "90", 10) || 90
+);
 const RTDN_TOPIC = process.env.RTDN_TOPIC || "";
 const RTDN_SUBSCRIPTION = process.env.RTDN_SUBSCRIPTION || "";
 const TAB_MONTHLY_COST = Math.max(
@@ -439,53 +474,109 @@ app.get("/app/status", async (req, res) => {
 });
 
 app.get("/iap/products", (req, res) => {
-  const entries = Object.entries(IAP_PRODUCT_MAP).map(([productId, tokens]) => ({
+  const requestedStoreType = normalizeIapStoreType(
+    req.query?.storeType || req.query?.store || ""
+  );
+  const productMap = getIapProductMapForStore(requestedStoreType);
+  const entries = Object.entries(productMap).map(([productId, tokens]) => ({
     productId,
     tokens
   }));
   if (entries.length === 0) {
-    return res.status(503).json({ ok: false, error: "iap_not_configured" });
+    return res.status(503).json({
+      ok: false,
+      error: "iap_not_configured",
+      storeType: requestedStoreType
+    });
   }
-  return res.json({ ok: true, products: entries, serverTimeMs: Date.now() });
+  return res.json({
+    ok: true,
+    storeType: requestedStoreType,
+    products: entries,
+    serverTimeMs: Date.now()
+  });
 });
 
 app.post("/iap/verify", async (req, res) => {
   const user = await getVerifiedUser(req, res);
   if (!user) return;
   const { productId, purchaseToken, platform } = req.body || {};
+  const storeType = normalizeIapStoreType(req.body?.storeType || "");
+  const marketCode = normalizeOneStoreMarketCode(
+    req.body?.marketCode || req.header("x-market-code") || ""
+  );
   if (!productId || !purchaseToken) {
     return res.status(400).json({ ok: false, error: "missing_params" });
   }
   if (platform && platform !== "android") {
     return res.status(400).json({ ok: false, error: "unsupported_platform" });
   }
-  if (!ANDROID_PUBLISHER_PACKAGE_NAME) {
-    return res.status(503).json({ ok: false, error: "android_package_missing" });
+  if (storeType === "play" && !ANDROID_PUBLISHER_PACKAGE_NAME) {
+    return res
+      .status(503)
+      .json({ ok: false, error: "android_package_missing", storeType });
   }
-  const tokens = resolveIapTokens(productId);
+  if (
+    storeType === "onestore" &&
+    (!ONESTORE_CLIENT_ID || !ONESTORE_CLIENT_SECRET)
+  ) {
+    return res
+      .status(503)
+      .json({ ok: false, error: "onestore_not_configured", storeType });
+  }
+  const tokens = resolveIapTokens(productId, storeType);
   if (!tokens) {
-    return res.status(404).json({ ok: false, error: "unknown_product" });
+    return res
+      .status(404)
+      .json({ ok: false, error: "unknown_product", storeType });
   }
 
   let verifyResult;
   try {
-    verifyResult = await verifyAndroidProductPurchase({
-      productId,
-      purchaseToken
-    });
+    if (storeType === "onestore") {
+      verifyResult = await verifyOneStoreProductPurchase({
+        productId,
+        purchaseToken,
+        marketCode
+      });
+    } else {
+      verifyResult = await verifyAndroidProductPurchase({
+        productId,
+        purchaseToken
+      });
+    }
   } catch (error) {
-    console.error("Android purchase verify failed:", error.message || error);
-    return res.status(502).json({ ok: false, error: "verify_failed" });
+    console.error("IAP purchase verify failed:", error.message || error);
+    return res.status(502).json({ ok: false, error: "verify_failed", storeType });
   }
   if (!verifyResult.ok) {
+    const detailText =
+      verifyResult.data == null
+        ? ""
+        : (() => {
+            try {
+              return JSON.stringify(verifyResult.data).slice(0, 2000);
+            } catch (_) {
+              return String(verifyResult.data).slice(0, 2000);
+            }
+          })();
+    console.warn("[IAP] verify rejected", {
+      storeType,
+      productId,
+      purchaseTokenPrefix: String(purchaseToken || "").slice(0, 12),
+      error: verifyResult.error || "invalid_purchase",
+      detail: detailText || null
+    });
     return res.status(400).json({
       ok: false,
-      error: verifyResult.error || "invalid_purchase"
+      error: verifyResult.error || "invalid_purchase",
+      storeType
     });
   }
 
   const data = verifyResult.data || {};
-  const shouldConsume = data.consumptionState === 0;
+  const shouldConsume =
+    storeType === "play" && Number.parseInt(data.consumptionState, 10) === 0;
 
   const db = getFirestore();
   if (!db) {
@@ -496,10 +587,12 @@ app.post("/iap/verify", async (req, res) => {
     timestamp: now.toISOString(),
     amount: tokens,
     type: "purchase",
-    description: `iap:${productId}`
+    description: `iap:${storeType}:${productId}`
   };
   const userRef = db.collection("users").doc(user.uid);
-  const purchaseRef = db.collection("iapPurchases").doc(String(purchaseToken));
+  const purchaseRef = db
+    .collection("iapPurchases")
+    .doc(buildIapPurchaseDocId({ storeType, purchaseToken }));
 
   let alreadyProcessed = false;
   let blockedReason = "";
@@ -538,6 +631,7 @@ app.post("/iap/verify", async (req, res) => {
       tx.create(purchaseRef, {
         uid: user.uid,
         productId,
+        storeType,
         tokens,
         purchaseToken: String(purchaseToken),
         orderId: data.orderId || "",
@@ -545,6 +639,8 @@ app.post("/iap/verify", async (req, res) => {
         purchaseState: data.purchaseState,
         consumptionState: data.consumptionState,
         acknowledgementState: data.acknowledgementState,
+        marketCode: marketCode || "",
+        verificationSource: storeType,
         createdAt: now.toISOString(),
         consumePending: shouldConsume
       });
@@ -558,7 +654,7 @@ app.post("/iap/verify", async (req, res) => {
     if (blockedReason) {
       return res
         .status(400)
-        .json({ ok: false, error: `purchase_${blockedReason}` });
+        .json({ ok: false, error: `purchase_${blockedReason}`, storeType });
     }
     if (shouldConsume) {
       try {
@@ -585,11 +681,17 @@ app.post("/iap/verify", async (req, res) => {
         ok: true,
         alreadyProcessed: true,
         tokenBalance: currentBalance,
+        storeType,
         serverTimeMs: Date.now()
       });
     } catch (error) {
       console.error("IAP balance read failed:", error.message || error);
-      return res.json({ ok: true, alreadyProcessed: true, serverTimeMs: Date.now() });
+      return res.json({
+        ok: true,
+        alreadyProcessed: true,
+        storeType,
+        serverTimeMs: Date.now()
+      });
     }
   }
 
@@ -618,6 +720,7 @@ app.post("/iap/verify", async (req, res) => {
 
   return res.json({
     ok: true,
+    storeType,
     tokenBalance: newBalance,
     tokenLedgerEntry: entry,
     consumePending,
@@ -750,7 +853,12 @@ app.post("/iap/rtdn", async (req, res) => {
     // OneTimeProductNotification notificationType=2 는 "환불"이 아니라
     // "보류(pending) 구매 취소(ONE_TIME_PRODUCT_CANCELED)" 의미임.
     // 여기서 revoked/refund 처리하면 정상 구매도 토큰이 다시 빠지는 버그 발생.
-    const purchaseRef = db.collection("iapPurchases").doc(purchaseToken);
+    const purchaseRef =
+      (await resolveIapPurchaseRefByToken({
+        db,
+        storeType: "play",
+        purchaseToken
+      })) || db.collection("iapPurchases").doc(purchaseToken);
     await purchaseRef.set(
       {
         rtdnNotificationType: 2,
@@ -783,7 +891,8 @@ app.post("/iap/rtdn", async (req, res) => {
         refundType: Number.isFinite(voidedRefundType) ? voidedRefundType : null,
         productType: Number.isFinite(voidedProductType)
           ? voidedProductType
-          : null
+          : null,
+        storeType: "play"
       });
       if (!result.ok && result.error !== "purchase_not_found") {
         console.warn("[RTDN] voided refund failed:", result.error);
@@ -1401,6 +1510,13 @@ const NEWS_CACHE_REFRESH_INTERVAL_MS = Math.min(
   NEWS_CACHE_TTL_MS,
   8 * 60 * 1000
 );
+const ON_DEMAND_CACHE_FRESH_MS = Math.max(
+  60 * 1000,
+  parseInt(
+    process.env.ON_DEMAND_CACHE_FRESH_MS || `${NEWS_CACHE_REFRESH_INTERVAL_MS}`,
+    10
+  ) || NEWS_CACHE_REFRESH_INTERVAL_MS
+);
 // When fresh cache is unavailable (upstream failures, refresh windows),
 // allow serving stale cached items for a limited window to avoid empty feeds.
 const NEWS_CACHE_STALE_MAX_MS = Math.min(
@@ -1431,7 +1547,11 @@ let regionAllowlist = new Map();
 const SOURCE_REPORT_THRESHOLD = 20;
 const SOURCE_BLOCK_THRESHOLD = 10;
 loadSourceLists();
-const IAP_PRODUCT_MAP = parseIapProductMap(IAP_PRODUCT_MAP_RAW);
+const DEFAULT_IAP_PRODUCT_MAP = parseIapProductMap(IAP_PRODUCT_MAP_RAW);
+const PLAY_IAP_PRODUCT_MAP =
+  parseIapProductMap(PLAY_IAP_PRODUCT_MAP_RAW) || {};
+const ONESTORE_IAP_PRODUCT_MAP =
+  parseIapProductMap(ONESTORE_IAP_PRODUCT_MAP_RAW) || {};
 
 const REGION_FEED_LANG = {
   US: "en",
@@ -3012,11 +3132,128 @@ function detectLatinLanguage(text) {
   return topLang;
 }
 
-function resolveIapTokens(productId) {
+function normalizeIapStoreType(value) {
+  const raw = String(value || "")
+    .trim()
+    .toLowerCase();
+  if (raw === "onestore" || raw === "one_store") return "onestore";
+  return "play";
+}
+
+function normalizeOneStoreMarketCode(value) {
+  const code = String(value || "")
+    .trim()
+    .toUpperCase();
+  if (code === "MKT_ONE" || code === "MKT_GLB") return code;
+  return "";
+}
+
+function normalizeOneStoreApiBaseUrl(value) {
+  const url = String(value || "")
+    .trim()
+    .replace(/\/+$/, "");
+  return url;
+}
+
+function getOneStoreApiBaseCandidates() {
+  const candidates = [
+    normalizeOneStoreApiBaseUrl(ONESTORE_API_BASE_URL),
+    "https://iap-apis.onestore.net",
+    "https://sbpp.onestore.net",
+    "https://apis.onestore.co.kr"
+  ].filter(Boolean);
+  return Array.from(new Set(candidates));
+}
+
+function getIapProductMapForStore(storeType) {
+  const normalizedStore = normalizeIapStoreType(storeType);
+  if (normalizedStore === "onestore") {
+    if (Object.keys(ONESTORE_IAP_PRODUCT_MAP).length > 0) {
+      return ONESTORE_IAP_PRODUCT_MAP;
+    }
+    return DEFAULT_IAP_PRODUCT_MAP;
+  }
+  if (Object.keys(PLAY_IAP_PRODUCT_MAP).length > 0) {
+    return PLAY_IAP_PRODUCT_MAP;
+  }
+  return DEFAULT_IAP_PRODUCT_MAP;
+}
+
+function resolveIapTokens(productId, storeType = "play") {
   if (!productId) return null;
-  const tokens = IAP_PRODUCT_MAP[productId];
+  const productMap = getIapProductMapForStore(storeType);
+  const tokens = productMap[productId];
   if (!Number.isFinite(tokens) || tokens <= 0) return null;
   return tokens;
+}
+
+function buildIapPurchaseDocId({ storeType, purchaseToken }) {
+  const normalizedStore = normalizeIapStoreType(storeType);
+  const token = String(purchaseToken || "").trim();
+  if (!token) return "";
+  if (normalizedStore === "play") return token;
+  return `${normalizedStore}:${token}`;
+}
+
+function buildIapPurchaseDocIdCandidates({ storeType, purchaseToken }) {
+  const token = String(purchaseToken || "").trim();
+  if (!token) return [];
+  const normalizedStore = normalizeIapStoreType(storeType);
+  const candidates = [];
+  const primaryId = buildIapPurchaseDocId({
+    storeType: normalizedStore,
+    purchaseToken: token
+  });
+  if (primaryId) {
+    candidates.push(primaryId);
+  }
+  if (!candidates.includes(token)) {
+    candidates.push(token);
+  }
+  const onestoreId = `onestore:${token}`;
+  if (!candidates.includes(onestoreId)) {
+    candidates.push(onestoreId);
+  }
+  return candidates;
+}
+
+async function resolveIapPurchaseRefByToken({ db, storeType, purchaseToken }) {
+  if (!db) return null;
+  const token = String(purchaseToken || "").trim();
+  if (!token) return null;
+  const normalizedStore = normalizeIapStoreType(storeType);
+  const docIds = buildIapPurchaseDocIdCandidates({
+    storeType: normalizedStore,
+    purchaseToken: token
+  });
+  for (const docId of docIds) {
+    const ref = db.collection("iapPurchases").doc(docId);
+    const snap = await ref.get();
+    if (snap.exists) return ref;
+  }
+
+  try {
+    const lookupSnap = await db
+      .collection("iapPurchases")
+      .where("purchaseToken", "==", token)
+      .limit(20)
+      .get();
+    if (lookupSnap.empty) return null;
+    if (normalizedStore === "onestore") {
+      const matched = lookupSnap.docs.find(
+        (doc) => normalizeIapStoreType(doc.data()?.storeType || "") === "onestore"
+      );
+      if (matched) return matched.ref;
+    }
+    return lookupSnap.docs[0].ref;
+  } catch (error) {
+    console.error(
+      "[IAP] purchase token lookup failed:",
+      token.slice(0, 12),
+      error?.message || error
+    );
+    return null;
+  }
 }
 
 function normalizeStringArray(input, size, fallback) {
@@ -3094,20 +3331,192 @@ async function consumeAndroidPurchase({ productId, purchaseToken }) {
   return { ok: true };
 }
 
+async function getOneStoreAccessToken(baseUrl) {
+  if (!ONESTORE_CLIENT_ID || !ONESTORE_CLIENT_SECRET) {
+    return { ok: false, error: "onestore_not_configured" };
+  }
+  const safeBaseUrl = normalizeOneStoreApiBaseUrl(baseUrl);
+  if (!safeBaseUrl) {
+    return { ok: false, error: "onestore_api_base_missing" };
+  }
+  const now = Date.now();
+  const cachedToken = cachedOneStoreTokenByBaseUrl.get(safeBaseUrl);
+  if (cachedToken && cachedToken.expiresAt > now + 60 * 1000) {
+    return { ok: true, accessToken: cachedToken.token };
+  }
+
+  const endpoint = `${safeBaseUrl}/v7/oauth/token`;
+  const params = new URLSearchParams();
+  params.set("grant_type", "client_credentials");
+  params.set("client_id", ONESTORE_CLIENT_ID);
+  params.set("client_secret", ONESTORE_CLIENT_SECRET);
+
+  const response = await fetchWithTimeout(
+    endpoint,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+      },
+      body: params.toString()
+    },
+    ONESTORE_API_TIMEOUT_MS
+  );
+  let payload = null;
+  let rawBody = "";
+  try {
+    rawBody = await response.text();
+    payload = rawBody ? JSON.parse(rawBody) : null;
+  } catch (_) {
+    payload = null;
+  }
+  const accessToken = String(
+    payload?.accessToken || payload?.access_token || ""
+  ).trim();
+  if (!response.ok || !accessToken) {
+    return {
+      ok: false,
+      error: "onestore_token_failed",
+      status: response.status,
+      data: payload || rawBody || null
+    };
+  }
+  const expiresInRaw =
+    payload?.expiresIn ?? payload?.expires_in ?? payload?.expires ?? "";
+  const expiresIn = Number.parseInt(expiresInRaw, 10);
+  const ttlMs = Number.isFinite(expiresIn)
+    ? Math.max(60, expiresIn) * 1000
+    : 60 * 60 * 1000;
+  cachedOneStoreTokenByBaseUrl.set(safeBaseUrl, {
+    token: accessToken,
+    expiresAt: now + ttlMs
+  });
+  return { ok: true, accessToken, data: payload };
+}
+
+async function verifyOneStoreProductPurchase({
+  productId,
+  purchaseToken,
+  marketCode = ""
+}) {
+  const safeClientId = encodeURIComponent(ONESTORE_CLIENT_ID);
+  const safeProductId = encodeURIComponent(String(productId || ""));
+  const safeToken = encodeURIComponent(String(purchaseToken || ""));
+  const normalizedMarketCode = normalizeOneStoreMarketCode(marketCode);
+  const apiBases = getOneStoreApiBaseCandidates();
+  const errors = [];
+
+  for (const apiBase of apiBases) {
+    const tokenResult = await getOneStoreAccessToken(apiBase);
+    if (!tokenResult.ok) {
+      errors.push({
+        apiBase,
+        error: tokenResult.error || "onestore_auth_failed",
+        status: tokenResult.status || 0,
+        data: tokenResult.data || null
+      });
+      continue;
+    }
+    const endpoint =
+      `${apiBase}/v7/apps/${safeClientId}/` +
+      `purchases/inapp/products/${safeProductId}/${safeToken}`;
+    const headers = {
+      Authorization: `Bearer ${tokenResult.accessToken}`,
+      Accept: "application/json",
+      "Content-Type": "application/json"
+    };
+    if (normalizedMarketCode) {
+      headers["x-market-code"] = normalizedMarketCode;
+    }
+
+    const response = await fetchWithTimeout(
+      endpoint,
+      { method: "GET", headers },
+      ONESTORE_API_TIMEOUT_MS
+    );
+    let payload = null;
+    try {
+      payload = await response.json();
+    } catch (_) {
+      payload = null;
+    }
+    if (!response.ok) {
+      const apiErrorCode =
+        payload?.error?.code || payload?.result?.code || payload?.code || "";
+      errors.push({
+        apiBase,
+        error: `onestore_http_${response.status}`,
+        status: response.status,
+        apiErrorCode: String(apiErrorCode || ""),
+        data: payload
+      });
+      continue;
+    }
+
+    const statusCode = Number.parseInt(payload?.status, 10);
+    if (Number.isFinite(statusCode) && statusCode !== 0) {
+      errors.push({
+        apiBase,
+        error: `onestore_status_${statusCode}`,
+        data: payload
+      });
+      continue;
+    }
+
+    const purchaseState = Number.parseInt(payload?.purchaseState, 10);
+    if (Number.isFinite(purchaseState) && purchaseState !== 0) {
+      return { ok: false, error: "purchase_not_completed", data: payload };
+    }
+
+    return {
+      ok: true,
+      data: {
+        orderId: payload?.purchaseId || payload?.orderId || "",
+        purchaseTimeMillis:
+          payload?.purchaseTime || payload?.purchaseTimeMillis || "",
+        purchaseState: payload?.purchaseState,
+        consumptionState: payload?.consumptionState,
+        acknowledgementState: payload?.acknowledgeState,
+        apiBaseUrl: apiBase,
+        raw: payload
+      }
+    };
+  }
+
+  const firstError = errors[0] || {};
+  return {
+    ok: false,
+    error: firstError.error || "onestore_verify_failed",
+    data: { errors }
+  };
+}
+
 async function applyIapRefundFromVoidedNotification({
   purchaseToken,
   orderId = "",
   refundType = null,
   productType = null,
-  source = "rtdn_voided"
+  source = "rtdn_voided",
+  storeType = "play"
 }) {
   const db = getFirestore();
   if (!db) return { ok: false, error: "firestore_unavailable" };
+  const normalizedStore = normalizeIapStoreType(storeType);
   const token = String(purchaseToken || "").trim();
   if (!token) return { ok: false, error: "missing_purchase_token" };
 
   const nowIso = new Date().toISOString();
-  const purchaseRef = db.collection("iapPurchases").doc(token);
+  const fallbackDocId =
+    buildIapPurchaseDocId({
+      storeType: normalizedStore,
+      purchaseToken: token
+    }) || token;
+  const purchaseRef =
+    (await resolveIapPurchaseRefByToken({
+      db,
+      storeType: normalizedStore,
+      purchaseToken: token
+    })) || db.collection("iapPurchases").doc(fallbackDocId);
   let result = { ok: false };
 
   await db.runTransaction(async (tx) => {
@@ -3124,16 +3533,23 @@ async function applyIapRefundFromVoidedNotification({
           refundProcessed: true,
           refundProcessedAt: nowIso,
           refundSource: source,
-          refundError: "purchase_not_found"
+          refundError: "purchase_not_found",
+          purchaseToken: token,
+          storeType: normalizedStore
         },
         { merge: true }
       );
-      result = { ok: false, error: "purchase_not_found", stored: true };
+      result = {
+        ok: false,
+        error: "purchase_not_found",
+        stored: true,
+        storeType: normalizedStore
+      };
       return;
     }
     const purchase = purchaseSnap.data() || {};
     if (purchase.refundProcessed || purchase.voided === true) {
-      result = { ok: true, alreadyProcessed: true };
+      result = { ok: true, alreadyProcessed: true, storeType: normalizedStore };
       return;
     }
     const uid = String(purchase.uid || "").trim();
@@ -3150,11 +3566,17 @@ async function applyIapRefundFromVoidedNotification({
           refundProcessed: true,
           refundProcessedAt: nowIso,
           refundSource: source,
-          refundError: !uid ? "missing_uid" : "invalid_tokens"
+          refundError: !uid ? "missing_uid" : "invalid_tokens",
+          storeType: normalizeIapStoreType(purchase.storeType || normalizedStore),
+          purchaseToken: token
         },
         { merge: true }
       );
-      result = { ok: false, error: "invalid_purchase_record" };
+      result = {
+        ok: false,
+        error: "invalid_purchase_record",
+        storeType: normalizedStore
+      };
       return;
     }
     const userRef = db.collection("users").doc(uid);
@@ -3171,11 +3593,13 @@ async function applyIapRefundFromVoidedNotification({
           refundProcessed: true,
           refundProcessedAt: nowIso,
           refundSource: source,
-          refundError: "user_not_found"
+          refundError: "user_not_found",
+          storeType: normalizeIapStoreType(purchase.storeType || normalizedStore),
+          purchaseToken: token
         },
         { merge: true }
       );
-      result = { ok: false, error: "user_not_found" };
+      result = { ok: false, error: "user_not_found", storeType: normalizedStore };
       return;
     }
     const userData = userSnap.data() || {};
@@ -3188,7 +3612,9 @@ async function applyIapRefundFromVoidedNotification({
       amount: -tokens,
       type: "refund",
       description: purchase.productId
-        ? `refund:${purchase.productId}`
+        ? `refund:${normalizeIapStoreType(
+            purchase.storeType || normalizedStore
+          )}:${purchase.productId}`
         : "refund",
       purchaseToken: token,
       orderId: orderId || purchase.orderId || ""
@@ -3221,11 +3647,19 @@ async function applyIapRefundFromVoidedNotification({
         refundProcessed: true,
         refundProcessedAt: nowIso,
         refundSource: source,
-        refundedTokens: tokens
+        refundedTokens: tokens,
+        storeType: normalizeIapStoreType(purchase.storeType || normalizedStore),
+        purchaseToken: token
       },
       { merge: true }
     );
-    result = { ok: true, refundedTokens: tokens, uid, newBalance };
+    result = {
+      ok: true,
+      refundedTokens: tokens,
+      uid,
+      newBalance,
+      storeType: normalizeIapStoreType(purchase.storeType || normalizedStore)
+    };
   });
 
   return result;
@@ -3427,6 +3861,39 @@ function deriveSourceNameFromTitle(title) {
   const name = parts[parts.length - 1];
   const stripped = name.replace(/\s+뉴스$/, "");
   return stripped || name;
+}
+
+function resolveSourceFromItemFallback(options = {}) {
+  const item = options.item || {};
+  const baseUrl = options.url || "";
+  const resolvedUrl = options.resolvedUrl || "";
+  const rawSource = normalizeWhitespace(
+    item.source?.title || item.source || item.creator || ""
+  );
+  if (rawSource && normalizeSourceKey(rawSource) !== "google news") {
+    return rawSource;
+  }
+  const titleSource = deriveSourceNameFromTitle(
+    normalizeWhitespace(item.title || "")
+  );
+  if (titleSource && normalizeSourceKey(titleSource) !== "google news") {
+    return titleSource;
+  }
+  const derivedSourceUrl = upgradeToHttps(
+    options.sourceUrl || deriveSourceUrl(item)
+  );
+  const rssExternalUrl = extractExternalUrlFromRssItem(item);
+  const hostCandidates = [
+    hostFromUrl(resolvedUrl),
+    hostFromUrl(rssExternalUrl),
+    hostFromUrl(derivedSourceUrl),
+    hostFromUrl(baseUrl)
+  ];
+  for (const host of hostCandidates) {
+    if (!host || isGoogleHost(host)) continue;
+    return formatSourceLabel(host);
+  }
+  return rawSource || "Unknown Source";
 }
 
 function isGoogleHost(hostname) {
@@ -5232,6 +5699,294 @@ async function processUserMaintenance(options = {}) {
   };
 }
 
+function stringifyOneStoreVerifyDetail(verifyResult) {
+  try {
+    return JSON.stringify(verifyResult?.data || null).slice(0, 2000);
+  } catch (_) {
+    return String(verifyResult?.data || "").slice(0, 2000);
+  }
+}
+
+function shouldMarkOneStorePurchaseRefunded(verifyResult) {
+  if (!verifyResult || verifyResult.ok) {
+    return { shouldRefund: false, reason: "active" };
+  }
+  const errorRaw = String(verifyResult.error || "").trim();
+  const error = errorRaw.toLowerCase();
+  const terminalErrors = new Set([
+    "purchase_not_completed",
+    "onestore_http_404",
+    "onestore_http_410",
+    "onestore_status_404",
+    "onestore_status_410"
+  ]);
+  if (terminalErrors.has(error)) {
+    return { shouldRefund: true, reason: error };
+  }
+
+  const purchaseState = Number.parseInt(verifyResult?.data?.purchaseState, 10);
+  if (Number.isFinite(purchaseState) && purchaseState !== 0) {
+    return { shouldRefund: true, reason: `purchase_state_${purchaseState}` };
+  }
+
+  const nestedErrors = Array.isArray(verifyResult?.data?.errors)
+    ? verifyResult.data.errors
+    : [];
+  for (const item of nestedErrors) {
+    const nestedError = String(item?.error || "")
+      .trim()
+      .toLowerCase();
+    if (terminalErrors.has(nestedError)) {
+      return { shouldRefund: true, reason: nestedError };
+    }
+    const status = Number.parseInt(item?.status, 10);
+    if (status === 404 || status === 410) {
+      return { shouldRefund: true, reason: `onestore_http_${status}` };
+    }
+    const apiErrorCode = String(item?.apiErrorCode || "").trim();
+    if (apiErrorCode === "404" || apiErrorCode === "410") {
+      return { shouldRefund: true, reason: `onestore_status_${apiErrorCode}` };
+    }
+  }
+
+  return { shouldRefund: false, reason: error || "verify_failed" };
+}
+
+async function reconcileOneStoreRefunds(options = {}) {
+  const db = getFirestore();
+  if (!db) {
+    return {
+      processed: 0,
+      checked: 0,
+      refunded: 0,
+      skipped: 0,
+      errors: 0,
+      skippedReason: "firestore_unavailable"
+    };
+  }
+  if (!ONESTORE_CLIENT_ID || !ONESTORE_CLIENT_SECRET) {
+    return {
+      processed: 0,
+      checked: 0,
+      refunded: 0,
+      skipped: 0,
+      errors: 0,
+      skippedReason: "onestore_not_configured"
+    };
+  }
+
+  const batchSize = Math.max(
+    1,
+    Math.min(
+      200,
+      Number.parseInt(options.batchSize, 10) || ONESTORE_REFUND_RECONCILE_BATCH
+    )
+  );
+  const recheckMs = ONESTORE_REFUND_RECHECK_INTERVAL_MINUTES * 60 * 1000;
+  const minPurchaseAgeMs = ONESTORE_REFUND_MIN_PURCHASE_AGE_MINUTES * 60 * 1000;
+  const maxPurchaseAgeMs = ONESTORE_REFUND_RECONCILE_MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+  const nowMs = Date.now();
+  const nowIso = new Date(nowMs).toISOString();
+
+  const stateRef = db.collection("cron_state").doc("onestore_refund_reconcile");
+  const stateSnap = await stateRef.get();
+  const lastDocId = stateSnap.exists
+    ? String(stateSnap.data()?.lastDocId || "")
+    : "";
+
+  const fetchBatch = async (cursor = "") => {
+    let query = db
+      .collection("iapPurchases")
+      .where("storeType", "==", "onestore")
+      .orderBy(FieldPath.documentId())
+      .limit(batchSize);
+    if (cursor) {
+      query = query.startAfter(cursor);
+    }
+    return query.get();
+  };
+
+  let wrapped = false;
+  let snap = await fetchBatch(lastDocId);
+  if (snap.empty && lastDocId) {
+    await stateRef.set(
+      {
+        lastDocId: "",
+        updatedAt: nowIso
+      },
+      { merge: true }
+    );
+    snap = await fetchBatch("");
+    wrapped = true;
+  }
+  if (snap.empty) {
+    return {
+      processed: 0,
+      checked: 0,
+      refunded: 0,
+      skipped: 0,
+      errors: 0,
+      reset: true,
+      wrapped
+    };
+  }
+
+  let processed = 0;
+  let checked = 0;
+  let refunded = 0;
+  let skipped = 0;
+  let errors = 0;
+
+  for (const doc of snap.docs) {
+    processed += 1;
+    const data = doc.data() || {};
+    if (data.refundProcessed === true || data.voided === true || data.canceled === true) {
+      skipped += 1;
+      continue;
+    }
+    const purchaseToken = String(data.purchaseToken || "").trim();
+    const productId = String(data.productId || "").trim();
+    if (!purchaseToken || !productId) {
+      skipped += 1;
+      continue;
+    }
+
+    const createdAtMs = Date.parse(
+      String(data.createdAt || data.purchaseTimeMillis || "")
+    );
+    if (Number.isFinite(createdAtMs)) {
+      const ageMs = nowMs - createdAtMs;
+      if (ageMs < minPurchaseAgeMs || ageMs > maxPurchaseAgeMs) {
+        skipped += 1;
+        continue;
+      }
+    }
+
+    const lastCheckedMs = Date.parse(String(data.oneStoreLastStatusCheckedAt || ""));
+    if (Number.isFinite(lastCheckedMs) && nowMs - lastCheckedMs < recheckMs) {
+      skipped += 1;
+      continue;
+    }
+
+    const marketCode = normalizeOneStoreMarketCode(data.marketCode || "");
+    let verifyResult = null;
+    try {
+      verifyResult = await verifyOneStoreProductPurchase({
+        productId,
+        purchaseToken,
+        marketCode
+      });
+      checked += 1;
+    } catch (error) {
+      errors += 1;
+      await doc.ref.set(
+        {
+          oneStoreLastStatusCheckedAt: nowIso,
+          oneStoreLastStatus: "verify_exception",
+          oneStoreLastError: String(error?.message || error || "verify_exception").slice(
+            0,
+            160
+          )
+        },
+        { merge: true }
+      );
+      continue;
+    }
+
+    if (verifyResult.ok) {
+      await doc.ref.set(
+        {
+          oneStoreLastStatusCheckedAt: nowIso,
+          oneStoreLastStatus: "active",
+          oneStoreLastError: "",
+          oneStoreLastErrorDetail: ""
+        },
+        { merge: true }
+      );
+      continue;
+    }
+
+    const decision = shouldMarkOneStorePurchaseRefunded(verifyResult);
+    const verifyDetail = stringifyOneStoreVerifyDetail(verifyResult);
+    if (!decision.shouldRefund) {
+      await doc.ref.set(
+        {
+          oneStoreLastStatusCheckedAt: nowIso,
+          oneStoreLastStatus: "verify_failed",
+          oneStoreLastError: String(verifyResult.error || "").slice(0, 160),
+          oneStoreLastErrorDetail: verifyDetail
+        },
+        { merge: true }
+      );
+      continue;
+    }
+
+    try {
+      const refundResult = await applyIapRefundFromVoidedNotification({
+        purchaseToken,
+        orderId: String(data.orderId || ""),
+        productType: 2,
+        source: `onestore_reconcile:${decision.reason}`,
+        storeType: "onestore"
+      });
+      const refundSucceeded = Boolean(refundResult?.ok || refundResult?.alreadyProcessed);
+      if (refundSucceeded) {
+        refunded += 1;
+      } else {
+        errors += 1;
+      }
+      await doc.ref.set(
+        {
+          oneStoreLastStatusCheckedAt: nowIso,
+          oneStoreLastStatus: refundSucceeded
+            ? "refunded"
+            : "refund_failed",
+          oneStoreLastError: refundSucceeded
+            ? ""
+            : String(refundResult?.error || "refund_failed").slice(0, 160),
+          oneStoreLastErrorDetail: verifyDetail,
+          oneStoreRefundReason: decision.reason
+        },
+        { merge: true }
+      );
+    } catch (error) {
+      errors += 1;
+      await doc.ref.set(
+        {
+          oneStoreLastStatusCheckedAt: nowIso,
+          oneStoreLastStatus: "refund_exception",
+          oneStoreLastError: String(error?.message || error || "refund_exception").slice(
+            0,
+            160
+          ),
+          oneStoreLastErrorDetail: verifyDetail,
+          oneStoreRefundReason: decision.reason
+        },
+        { merge: true }
+      );
+    }
+  }
+
+  const nextDocId = snap.docs[snap.docs.length - 1].id;
+  await stateRef.set(
+    {
+      lastDocId: nextDocId,
+      updatedAt: nowIso
+    },
+    { merge: true }
+  );
+
+  return {
+    processed,
+    checked,
+    refunded,
+    skipped,
+    errors,
+    lastDocId: nextDocId,
+    wrapped
+  };
+}
+
 async function collectBreakingRegionsFromUsers(db, options = {}) {
   if (!db) return { regions: new Set(["ALL"]), scanned: 0 };
   const batchSize = Math.min(
@@ -6098,6 +6853,7 @@ function loadServiceAccount() {
 
 let cachedPublisherCredentials = null;
 let cachedAndroidPublisher = null;
+const cachedOneStoreTokenByBaseUrl = new Map();
 
 function loadAndroidPublisherCredentials() {
   if (cachedPublisherCredentials) return cachedPublisherCredentials;
@@ -6650,17 +7406,20 @@ async function getCanonicalKeyword(keyword, lang, options = {}) {
   const cached = canonicalCache.get(normalized);
   if (cached) return cached;
 
-  if (firestore) {
+  const db = getFirestore();
+  if (db) {
     const docId = makeKeywordDocId(keyword);
-    const db = getFirestore();
-    if (!db) return null;
-    const doc = await db.collection("keywords").doc(docId).get();
-    if (doc.exists) {
-      const canonical = doc.data()?.canonical;
-      if (canonical) {
-        canonicalCache.set(normalized, canonical);
-        return canonical;
+    try {
+      const doc = await db.collection("keywords").doc(docId).get();
+      if (doc.exists) {
+        const canonical = doc.data()?.canonical;
+        if (canonical) {
+          canonicalCache.set(normalized, canonical);
+          return canonical;
+        }
       }
+    } catch (error) {
+      console.error("Canonical keyword lookup failed:", error?.message || error);
     }
   }
 
@@ -7109,11 +7868,13 @@ async function getTaskCacheState(task = {}) {
     return {
       identity: null,
       exists: false,
+      hasAnyCache: false,
       count: 0,
       hasProcessing: false,
       hasProcessed: false,
       onlyProcessing: false,
-      processingAgeMs: null
+      processingAgeMs: null,
+      cacheAgeMs: null
     };
   }
   const cacheId = makeNewsCacheId(
@@ -7126,9 +7887,22 @@ async function getTaskCacheState(task = {}) {
   const cachedMeta = await getCachedNewsMeta(cacheId);
   const cachedItems =
     cachedMeta && Array.isArray(cachedMeta.data?.items) ? cachedMeta.data.items : [];
+  const summary = summarizeTaskCachedItems(cachedItems);
+  const cacheAgeMs = Number.isFinite(cachedMeta?.ageMs) ? cachedMeta.ageMs : null;
+  const fresh = cacheAgeMs !== null && cacheAgeMs <= ON_DEMAND_CACHE_FRESH_MS;
+  const processingAgeMs =
+    Number.isFinite(summary.processingAgeMs)
+      ? summary.processingAgeMs
+      : summary.hasProcessing && Number.isFinite(cacheAgeMs)
+        ? cacheAgeMs
+        : null;
   return {
     identity,
-    ...summarizeTaskCachedItems(cachedItems)
+    ...summary,
+    hasAnyCache: summary.exists,
+    exists: summary.exists && fresh,
+    processingAgeMs,
+    cacheAgeMs
   };
 }
 
@@ -7160,19 +7934,30 @@ async function enqueueProcessingRecoveryIfNeeded(task = {}, req, options = {}) {
     return { ok: false, reason: "cooldown" };
   }
   const cacheSummary = summarizeTaskCachedItems(options.items, nowMs);
-  const cacheState = cacheSummary.exists
+  let cacheState = cacheSummary.exists
     ? { identity, ...cacheSummary }
     : await getTaskCacheState(identity);
+  if (
+    cacheState.onlyProcessing &&
+    !Number.isFinite(cacheState.processingAgeMs)
+  ) {
+    const persistedCacheState = await getTaskCacheState(identity);
+    if (persistedCacheState.onlyProcessing) {
+      cacheState = persistedCacheState;
+    }
+  }
   if (!cacheState.onlyProcessing) {
     return { ok: false, reason: "not_processing_only", cacheState };
   }
+  const force = options.force === true;
   if (
-    !Number.isFinite(cacheState.processingAgeMs) ||
-    cacheState.processingAgeMs < PROCESSING_RECOVERY_TRIGGER_MS
+    !force &&
+    (!Number.isFinite(cacheState.processingAgeMs) ||
+      cacheState.processingAgeMs < PROCESSING_RECOVERY_TRIGGER_MS)
   ) {
     return { ok: false, reason: "processing_recent", cacheState };
   }
-  const queued = await enqueueCrawlTasks(
+  const crawlResult = await runCrawlTasks(
     [
       {
         keyword: identity.keyword,
@@ -7185,14 +7970,31 @@ async function enqueueProcessingRecoveryIfNeeded(task = {}, req, options = {}) {
     ],
     req
   );
-  if (queued.ok && queued.enqueued > 0) {
+  const queuedByTasks =
+    crawlResult?.mode === "tasks" &&
+    Number(crawlResult?.enqueued || 0) > 0;
+  const completedInline =
+    crawlResult?.mode === "inline" &&
+    Number(crawlResult?.success || 0) > 0;
+  if (queuedByTasks || completedInline) {
     markProcessingRecoveryQueued(identity.key, nowMs);
     await markSkipNextScheduledCrawl(identity, {
       reason: "processing_recovery"
     });
-    return { ok: true, reason: "queued", cacheState };
+    return {
+      ok: true,
+      reason: "queued",
+      mode: completedInline ? "inline" : "tasks",
+      cacheState
+    };
   }
-  return { ok: false, reason: queued.error || "enqueue_failed", cacheState };
+  return {
+    ok: false,
+    reason:
+      crawlResult?.error ||
+      (crawlResult?.mode === "inline" ? "inline_failed" : "enqueue_failed"),
+    cacheState
+  };
 }
 
 async function canRunFastModeFallback(task = {}) {
@@ -7202,6 +8004,9 @@ async function canRunFastModeFallback(task = {}) {
   const cacheState = await getTaskCacheState(identity);
   if (cacheState.exists) {
     return { ok: false, reason: "cache_exists", cacheState };
+  }
+  if (cacheState.hasAnyCache) {
+    return { ok: false, reason: "stale_cache_exists", cacheState };
   }
   if (!db) return { ok: true, reason: "no_firestore" };
 
@@ -9605,39 +10410,124 @@ app.post("/keyword/subscription", async (req, res) => {
       feedLang,
       alias: !isRemove ? keyword : ""
     });
+    let onDemandQueued = false;
+    let onDemandReason = "";
+    let onDemandMode = "";
+    let fastModeFallbackRan = false;
+    let fastModeFallbackReason = "";
     if (!isRemove && canonicalKeyword) {
       const effectiveLang = normalizeLangCode(lang || "en");
       const effectiveFeedLang = normalizeLangCode(feedLang || lang || "en");
       const effectiveRegion = normalizeRegionCode(region || "ALL", "ALL");
+      const onDemandTask = {
+        keyword: canonicalKeyword,
+        canonicalKeyword,
+        lang: effectiveLang,
+        feedLang: effectiveFeedLang,
+        region: effectiveRegion,
+        limit: 20
+      };
+      const cacheState = await getTaskCacheState(onDemandTask);
+      const shouldQueueOnDemand =
+        !cacheState.hasAnyCache || cacheState.onlyProcessing;
+      if (shouldQueueOnDemand) {
+        try {
+          const crawlResult = await runCrawlTasks([onDemandTask], req);
+          const queuedByTasks =
+            crawlResult?.mode === "tasks" &&
+            Number(crawlResult?.enqueued || 0) > 0;
+          const completedInline =
+            crawlResult?.mode === "inline" &&
+            Number(crawlResult?.success || 0) > 0;
+          if (queuedByTasks || completedInline) {
+            onDemandQueued = true;
+            onDemandMode = completedInline ? "inline" : "tasks";
+            onDemandReason = cacheState.onlyProcessing
+              ? "processing_recovery"
+              : "cache_empty";
+            await markSkipNextScheduledCrawl(onDemandTask, {
+              reason: "keyword_subscription_on_demand"
+            });
+            console.log(
+              `[KeywordSubscription] on-demand crawl ${onDemandMode} ${canonicalKeyword} ${effectiveRegion}/${effectiveLang} feed=${effectiveFeedLang}`
+            );
+          } else {
+            onDemandReason =
+              crawlResult?.error ||
+              (crawlResult?.mode === "inline"
+                ? "inline_failed"
+                : "enqueue_failed");
+            console.warn(
+              `[KeywordSubscription] on-demand queue unavailable ${canonicalKeyword} ${effectiveRegion}/${effectiveLang}`,
+              onDemandReason || "unknown"
+            );
+          }
+        } catch (error) {
+          onDemandReason = "enqueue_failed";
+          console.error(
+            "[KeywordSubscription] on-demand enqueue failed",
+            canonicalKeyword,
+            error?.message || error
+          );
+        }
+      } else {
+        onDemandReason = "cache_exists";
+      }
       const refreshTimeoutMs = Math.max(60000, TASK_TIMEOUT_MS * 6);
-      try {
-        await runWithTimeout(
-          () =>
-            refreshNewsCacheFromSource({
-              keyword: canonicalKeyword,
-              canonicalKeyword,
-              lang: effectiveLang,
-              feedLang: effectiveFeedLang,
-              region: effectiveRegion,
-              limit: 20,
-              skipPush: true,
-              fastMode: true
-            }),
-          refreshTimeoutMs,
-          "keyword_refresh"
-        );
-      } catch (error) {
-        console.error(
-          "[KeywordSubscription] refresh failed",
-          canonicalKeyword,
-          error?.message || error
-        );
+      if (!cacheState.hasAnyCache && onDemandMode !== "inline") {
+        try {
+          const fastModeDecision = await canRunFastModeFallback(onDemandTask);
+          fastModeFallbackReason = fastModeDecision.reason || "";
+          if (fastModeDecision.ok) {
+            const fastModePayload = await runWithTimeout(
+              () =>
+                refreshNewsCacheFromSource({
+                  keyword: canonicalKeyword,
+                  canonicalKeyword,
+                  lang: effectiveLang,
+                  feedLang: effectiveFeedLang,
+                  region: effectiveRegion,
+                  limit: 20,
+                  skipPush: true,
+                  fastMode: true
+                }),
+              refreshTimeoutMs,
+              "keyword_refresh"
+            );
+            const hasFastItems =
+              Array.isArray(fastModePayload?.items) &&
+              fastModePayload.items.length > 0;
+            if (hasFastItems) {
+              fastModeFallbackRan = true;
+              await markFastModeFallbackTriggered(onDemandTask, {
+                reason: "keyword_subscription_cache_empty"
+              });
+            } else {
+              fastModeFallbackReason = "empty_fastmode_result";
+            }
+          }
+        } catch (error) {
+          console.error(
+            "[KeywordSubscription] refresh failed",
+            canonicalKeyword,
+            error?.message || error
+          );
+        }
+      } else if (cacheState.hasAnyCache) {
+        fastModeFallbackReason = "cache_exists";
+      } else if (onDemandMode === "inline") {
+        fastModeFallbackReason = "inline_on_demand";
       }
     }
     res.json({
       keyword,
       canonical: canonicalKeyword,
-      count: count ?? null
+      count: count ?? null,
+      onDemandQueued,
+      onDemandReason,
+      onDemandMode,
+      fastModeFallbackRan,
+      fastModeFallbackReason
     });
   } catch (error) {
     res.status(500).json({ error: "failed to update keyword subscription" });
@@ -9678,12 +10568,13 @@ app.post("/keyword/set", async (req, res) => {
       result.previousCanonical || previousKeyword
     );
     const nextKey = nextCanonical ? keywordKey(nextCanonical) : "";
-    const shouldTriggerOnDemand =
-      Boolean(result.nextConditionAdded) && Boolean(nextKey);
+    const shouldEvaluateOnDemand = Boolean(nextKey);
     let onDemandQueued = false;
+    let onDemandReason = "";
+    let onDemandMode = "";
     let fastModeFallbackRan = false;
     let fastModeFallbackReason = "";
-    if (shouldTriggerOnDemand) {
+    if (shouldEvaluateOnDemand) {
       const effectiveLang = normalizeLangCode(result.nextLang || lang || "en");
       const effectiveFeedLang = normalizeLangCode(
         result.nextFeedLang || feedLang || lang || "en"
@@ -9700,64 +10591,104 @@ app.post("/keyword/set", async (req, res) => {
         region: effectiveRegion,
         limit: 20
       };
-      try {
-        const queued = await enqueueCrawlTasks([onDemandTask], req);
-        if (queued.ok && queued.enqueued > 0) {
-          onDemandQueued = true;
-          await markSkipNextScheduledCrawl(onDemandTask, {
-            reason: "keyword_set_on_demand"
-          });
-          console.log(
-            `[KeywordSet] on-demand crawl queued ${nextCanonical} ${effectiveRegion}/${effectiveLang} feed=${effectiveFeedLang}`
-          );
-        } else {
-          console.warn(
-            `[KeywordSet] on-demand queue unavailable ${nextCanonical} ${effectiveRegion}/${effectiveLang}`,
-            queued.error || "unknown"
+      const cacheState = await getTaskCacheState(onDemandTask);
+      const shouldTriggerOnDemand =
+        Boolean(result.nextConditionAdded) ||
+        !cacheState.hasAnyCache ||
+        cacheState.onlyProcessing;
+      if (shouldTriggerOnDemand) {
+        try {
+          const crawlResult = await runCrawlTasks([onDemandTask], req);
+          const queuedByTasks =
+            crawlResult?.mode === "tasks" &&
+            Number(crawlResult?.enqueued || 0) > 0;
+          const completedInline =
+            crawlResult?.mode === "inline" &&
+            Number(crawlResult?.success || 0) > 0;
+          if (queuedByTasks || completedInline) {
+            onDemandQueued = true;
+            onDemandMode = completedInline ? "inline" : "tasks";
+            onDemandReason = cacheState.onlyProcessing
+              ? "processing_recovery"
+              : !cacheState.hasAnyCache
+                ? "cache_empty"
+                : "condition_added";
+            await markSkipNextScheduledCrawl(onDemandTask, {
+              reason: "keyword_set_on_demand"
+            });
+            console.log(
+              `[KeywordSet] on-demand crawl ${onDemandMode} ${nextCanonical} ${effectiveRegion}/${effectiveLang} feed=${effectiveFeedLang}`
+            );
+          } else {
+            onDemandReason =
+              crawlResult?.error ||
+              (crawlResult?.mode === "inline"
+                ? "inline_failed"
+                : "enqueue_failed");
+            console.warn(
+              `[KeywordSet] on-demand queue unavailable ${nextCanonical} ${effectiveRegion}/${effectiveLang}`,
+              onDemandReason || "unknown"
+            );
+          }
+        } catch (error) {
+          onDemandReason = "enqueue_failed";
+          console.error(
+            "[KeywordSet] on-demand enqueue failed",
+            nextCanonical,
+            error?.message || error
           );
         }
-      } catch (error) {
-        console.error(
-          "[KeywordSet] on-demand enqueue failed",
-          nextCanonical,
-          error?.message || error
-        );
+      } else {
+        onDemandReason = "cache_exists";
       }
 
       const refreshTimeoutMs = Math.max(60000, TASK_TIMEOUT_MS * 6);
-      try {
-        const fastModeDecision = await canRunFastModeFallback(onDemandTask);
-        fastModeFallbackReason = fastModeDecision.reason || "";
-        if (fastModeDecision.ok) {
-          await runWithTimeout(
-            () =>
-              refreshNewsCacheFromSource({
-                keyword: nextCanonical,
-                canonicalKeyword: nextCanonical,
-                lang: effectiveLang,
-                feedLang: effectiveFeedLang,
-                region: effectiveRegion,
-                limit: 20,
-                skipPush: true,
-                fastMode: true
-              }),
-            refreshTimeoutMs,
-            "keyword_fastmode_fallback"
-          );
-          fastModeFallbackRan = true;
-          await markFastModeFallbackTriggered(onDemandTask, {
-            reason: "keyword_set_cache_empty"
-          });
-          console.log(
-            `[KeywordSet] fastMode fallback ran ${nextCanonical} ${effectiveRegion}/${effectiveLang} feed=${effectiveFeedLang}`
+      if (!cacheState.hasAnyCache && onDemandMode !== "inline") {
+        try {
+          const fastModeDecision = await canRunFastModeFallback(onDemandTask);
+          fastModeFallbackReason = fastModeDecision.reason || "";
+          if (fastModeDecision.ok) {
+            const fastModePayload = await runWithTimeout(
+              () =>
+                refreshNewsCacheFromSource({
+                  keyword: nextCanonical,
+                  canonicalKeyword: nextCanonical,
+                  lang: effectiveLang,
+                  feedLang: effectiveFeedLang,
+                  region: effectiveRegion,
+                  limit: 20,
+                  skipPush: true,
+                  fastMode: true
+                }),
+              refreshTimeoutMs,
+              "keyword_fastmode_fallback"
+            );
+            const hasFastItems =
+              Array.isArray(fastModePayload?.items) &&
+              fastModePayload.items.length > 0;
+            if (hasFastItems) {
+              fastModeFallbackRan = true;
+              await markFastModeFallbackTriggered(onDemandTask, {
+                reason: "keyword_set_cache_empty"
+              });
+              console.log(
+                `[KeywordSet] fastMode fallback ran ${nextCanonical} ${effectiveRegion}/${effectiveLang} feed=${effectiveFeedLang}`
+              );
+            } else {
+              fastModeFallbackReason = "empty_fastmode_result";
+            }
+          }
+        } catch (error) {
+          console.error(
+            "[KeywordSet] fastMode fallback failed",
+            nextCanonical,
+            error?.message || error
           );
         }
-      } catch (error) {
-        console.error(
-          "[KeywordSet] fastMode fallback failed",
-          nextCanonical,
-          error?.message || error
-        );
+      } else if (cacheState.hasAnyCache) {
+        fastModeFallbackReason = "cache_exists";
+      } else if (onDemandMode === "inline") {
+        fastModeFallbackReason = "inline_on_demand";
       }
     }
     res.json({
@@ -9768,6 +10699,8 @@ app.post("/keyword/set", async (req, res) => {
       previousCanonical: previousCanonical || "",
       count: result.nextCount ?? null,
       onDemandQueued,
+      onDemandReason,
+      onDemandMode,
       fastModeFallbackRan,
       fastModeFallbackReason
     });
@@ -9913,18 +10846,23 @@ app.post("/breaking/activate", async (req, res) => {
     };
     const cacheState = await getTaskCacheState(task);
     const shouldQueueOnDemand =
-      !cacheState.exists ||
-      (cacheState.onlyProcessing &&
-        Number.isFinite(cacheState.processingAgeMs) &&
-        cacheState.processingAgeMs >= PROCESSING_RECOVERY_TRIGGER_MS);
+      !cacheState.exists || cacheState.onlyProcessing;
     let onDemandQueued = false;
+    let onDemandMode = "";
     let onDemandReason = shouldQueueOnDemand ? "cache_empty" : "cache_exists";
     let processingRecoveryQueued = false;
     if (shouldQueueOnDemand) {
       try {
-        const queued = await enqueueCrawlTasks([task], req);
-        if (queued.ok && queued.enqueued > 0) {
+        const crawlResult = await runCrawlTasks([task], req);
+        const queuedByTasks =
+          crawlResult?.mode === "tasks" &&
+          Number(crawlResult?.enqueued || 0) > 0;
+        const completedInline =
+          crawlResult?.mode === "inline" &&
+          Number(crawlResult?.success || 0) > 0;
+        if (queuedByTasks || completedInline) {
           onDemandQueued = true;
+          onDemandMode = completedInline ? "inline" : "tasks";
           if (cacheState.onlyProcessing) {
             onDemandReason = "processing_recovery";
             processingRecoveryQueued = true;
@@ -9936,7 +10874,11 @@ app.post("/breaking/activate", async (req, res) => {
             reason: `breaking_activate_${onDemandReason}`
           });
         } else {
-          onDemandReason = queued.error || "enqueue_failed";
+          onDemandReason =
+            crawlResult?.error ||
+            (crawlResult?.mode === "inline"
+              ? "inline_failed"
+              : "enqueue_failed");
         }
       } catch (error) {
         onDemandReason = "enqueue_failed";
@@ -9949,13 +10891,13 @@ app.post("/breaking/activate", async (req, res) => {
 
     let fastModeFallbackRan = false;
     let fastModeFallbackReason = "";
-    if (!cacheState.exists) {
+    if (!cacheState.exists && onDemandMode !== "inline") {
       const refreshTimeoutMs = Math.max(60000, TASK_TIMEOUT_MS * 6);
       try {
         const fastModeDecision = await canRunFastModeFallback(task);
         fastModeFallbackReason = fastModeDecision.reason || "";
         if (fastModeDecision.ok) {
-          await runWithTimeout(
+          const fastModePayload = await runWithTimeout(
             () =>
               refreshNewsCacheFromSource({
                 keyword: BREAKING_KEYWORD,
@@ -9970,10 +10912,17 @@ app.post("/breaking/activate", async (req, res) => {
             refreshTimeoutMs,
             "breaking_fastmode_activate"
           );
-          fastModeFallbackRan = true;
-          await markFastModeFallbackTriggered(task, {
-            reason: "breaking_activate_cache_empty"
-          });
+          const hasFastItems =
+            Array.isArray(fastModePayload?.items) &&
+            fastModePayload.items.length > 0;
+          if (hasFastItems) {
+            fastModeFallbackRan = true;
+            await markFastModeFallbackTriggered(task, {
+              reason: "breaking_activate_cache_empty"
+            });
+          } else {
+            fastModeFallbackReason = "empty_fastmode_result";
+          }
         }
       } catch (error) {
         console.error(
@@ -9981,8 +10930,10 @@ app.post("/breaking/activate", async (req, res) => {
           error?.message || error
         );
       }
-    } else {
+    } else if (cacheState.exists) {
       fastModeFallbackReason = "cache_exists";
+    } else if (onDemandMode === "inline") {
+      fastModeFallbackReason = "inline_on_demand";
     }
 
     return res.json({
@@ -9992,9 +10943,12 @@ app.post("/breaking/activate", async (req, res) => {
       lang,
       feedLang,
       hasCache: cacheState.exists,
+      hasAnyCache: cacheState.hasAnyCache,
+      cacheAgeMs: cacheState.cacheAgeMs,
       cacheOnlyProcessing: cacheState.onlyProcessing,
       cacheProcessingAgeMs: cacheState.processingAgeMs,
       onDemandQueued,
+      onDemandMode,
       onDemandReason,
       processingRecoveryQueued,
       fastModeFallbackRan,
@@ -10694,7 +11648,12 @@ async function refreshNewsCacheFromSource(options = {}) {
           summary = summarizeText(summary, 2);
         }
         const publishedAt = normalizePublishedAt(item);
-        const source = normalizeWhitespace(item.source?.title || item.creator || "") || "Unknown Source";
+        const source = resolveSourceFromItemFallback({
+          item,
+          url,
+          resolvedUrl: url,
+          sourceUrl: deriveSourceUrl(item)
+        });
         const cacheSeed = buildArticleCacheSeed({
           url,
           source,
@@ -10900,16 +11859,134 @@ async function refreshNewsCacheFromSource(options = {}) {
           filteredFallback = enforced;
         }
       }
-      const payload = {
-        keyword,
-        canonical: canonicalKeyword,
-        lang,
-        items: filteredFallback,
-        processingDurationMs,
-        processingEtaMinutes
-      };
-      newsCache.set(cacheKey, payload);
-      return payload;
+      const fallbackState = summarizeTaskCachedItems(filteredFallback);
+      const staleProcessingOnly =
+        !fastMode &&
+        fallbackState.onlyProcessing &&
+        Number.isFinite(fallbackState.processingAgeMs) &&
+        fallbackState.processingAgeMs >= PROCESSING_RECOVERY_TRIGGER_MS;
+      const nonFastProcessingOnly =
+        !fastMode && fallbackState.onlyProcessing;
+      if (staleProcessingOnly) {
+        console.warn(
+          `[CacheFallback] convert stale processing-only cache ${canonicalKeyword} ${region}/${lang} feed=${feedLang} ageMs=${fallbackState.processingAgeMs}`
+        );
+        const completedFallback = filteredFallback.map((item) =>
+          item && item.processing
+            ? {
+                ...item,
+                processing: false,
+                processingStartedAt: "",
+                processingEtaMinutes: 0
+              }
+            : item
+        );
+        const payload = {
+          keyword,
+          canonical: canonicalKeyword,
+          lang,
+          items: completedFallback,
+          processingDurationMs,
+          processingEtaMinutes
+        };
+        newsCache.set(cacheKey, payload);
+        try {
+          await setCachedNews(cacheId, {
+            keyword,
+            canonical: canonicalKeyword,
+            keywordKey: keywordKey(canonicalKeyword),
+            aliases: aliasKeywords,
+            lang,
+            feedLang,
+            region,
+            limit,
+            items: completedFallback,
+            processingDurationMs,
+            processingEtaMinutes
+          });
+        } catch (error) {
+          console.error(
+            "[CacheFallback] persist stale-completed fallback failed",
+            error?.message || error
+          );
+        }
+        return payload;
+      } else if (nonFastProcessingOnly) {
+        // Non-fast refresh has completed but still produced no finalized items.
+        // Convert placeholder-only cache to completed cards to avoid
+        // indefinitely showing "AI processing" badges.
+        const completedFallback = filteredFallback.map((item) =>
+          item && item.processing
+            ? {
+                ...item,
+                processing: false,
+                processingStartedAt: "",
+                processingEtaMinutes: 0
+              }
+            : item
+        );
+        const payload = {
+          keyword,
+          canonical: canonicalKeyword,
+          lang,
+          items: completedFallback,
+          processingDurationMs,
+          processingEtaMinutes
+        };
+        newsCache.set(cacheKey, payload);
+        try {
+          await setCachedNews(cacheId, {
+            keyword,
+            canonical: canonicalKeyword,
+            keywordKey: keywordKey(canonicalKeyword),
+            aliases: aliasKeywords,
+            lang,
+            feedLang,
+            region,
+            limit,
+            items: completedFallback,
+            processingDurationMs,
+            processingEtaMinutes
+          });
+        } catch (error) {
+          console.error(
+            "[CacheFallback] persist completed fallback failed",
+            error?.message || error
+          );
+        }
+        return payload;
+      } else {
+        const payload = {
+          keyword,
+          canonical: canonicalKeyword,
+          lang,
+          items: filteredFallback,
+          processingDurationMs,
+          processingEtaMinutes
+        };
+        newsCache.set(cacheKey, payload);
+        try {
+          await setCachedNews(cacheId, {
+            keyword,
+            canonical: canonicalKeyword,
+            keywordKey: keywordKey(canonicalKeyword),
+            aliases: aliasKeywords,
+            lang,
+            feedLang,
+            region,
+            limit,
+            items: filteredFallback,
+            processingDurationMs,
+            processingEtaMinutes
+          });
+        } catch (error) {
+          console.error(
+            "[CacheFallback] persist fallback failed",
+            error?.message || error
+          );
+        }
+        return payload;
+      }
     }
   }
 
@@ -10956,22 +12033,29 @@ async function refreshNewsCacheFromSource(options = {}) {
     processingDurationMs,
     processingEtaMinutes
   };
+  const shouldPersistCache = Array.isArray(contentDeduped) && contentDeduped.length > 0;
   if (sortedResults.length) {
     newsCache.set(cacheKey, payload);
   }
-  await setCachedNews(cacheId, {
-    keyword,
-    canonical: canonicalKeyword,
-    keywordKey: keywordKey(canonicalKeyword),
-    aliases: aliasKeywords,
-    lang,
-    feedLang,
-    region,
-    limit,
-    items: contentDeduped,
-    processingDurationMs,
-    processingEtaMinutes
-  });
+  if (shouldPersistCache) {
+    await setCachedNews(cacheId, {
+      keyword,
+      canonical: canonicalKeyword,
+      keywordKey: keywordKey(canonicalKeyword),
+      aliases: aliasKeywords,
+      lang,
+      feedLang,
+      region,
+      limit,
+      items: contentDeduped,
+      processingDurationMs,
+      processingEtaMinutes
+    });
+  } else {
+    console.log(
+      `[CacheSkipWrite] empty result ${canonicalKeyword} ${region}/${lang} feed=${feedLang} fast=${fastMode ? "1" : "0"}`
+    );
+  }
   return payload;
 }
 
@@ -10994,6 +12078,7 @@ app.get("/news", async (req, res) => {
     const refreshSeed = (req.query.refreshSeed || "").toString().trim();
     const skipMemoryCache =
       refresh === "1" || refresh === "true" || Boolean(refreshSeed);
+    const refreshRequested = skipMemoryCache;
     const canonicalKeyword =
       normalizeWhitespace((await getCanonicalKeyword(keyword, lang)) || keyword) ||
       keyword;
@@ -11063,7 +12148,90 @@ app.get("/news", async (req, res) => {
       }
     }
 
+    if (!items || !items.length) {
+      const onDemandTask = {
+        keyword: canonicalKeyword,
+        canonicalKeyword,
+        region,
+        lang,
+        feedLang,
+        limit: 20
+      };
+      const cacheState = await getTaskCacheState(onDemandTask);
+      const shouldQueueOnDemand =
+        !cacheState.hasAnyCache || cacheState.onlyProcessing;
+      if (shouldQueueOnDemand) {
+        enqueueCrawlTasks([onDemandTask], req)
+          .then(async (queued) => {
+            if (queued?.ok && Number(queued.enqueued || 0) > 0) {
+              await markSkipNextScheduledCrawl(onDemandTask, {
+                reason: "news_request_on_demand"
+              });
+              console.log(
+                `[News] on-demand queued ${canonicalKeyword} ${region}/${lang} feed=${feedLang}`
+              );
+            }
+          })
+          .catch((error) => {
+            console.error(
+              "[News] on-demand enqueue failed",
+              canonicalKeyword,
+              error?.message || error
+            );
+          });
+      }
+
+      if (refreshRequested) {
+        const refreshTimeoutMs = Math.min(
+          12000,
+          Math.max(8000, TASK_TIMEOUT_MS)
+        );
+        try {
+          const fastModeDecision = await canRunFastModeFallback(onDemandTask);
+          if (fastModeDecision.ok) {
+            const fastModePayload = await runWithTimeout(
+              () =>
+                refreshNewsCacheFromSource({
+                  keyword: canonicalKeyword,
+                  canonicalKeyword,
+                  lang,
+                  feedLang,
+                  region,
+                  limit: 20,
+                  skipPush: true,
+                  fastMode: true
+                }),
+              refreshTimeoutMs,
+              "news_fastmode_fallback"
+            );
+            if (
+              Array.isArray(fastModePayload?.items) &&
+              fastModePayload.items.length
+            ) {
+              items = fastModePayload.items;
+              if (items.length > limit) {
+                items = items.slice(0, limit);
+              }
+              await markFastModeFallbackTriggered(onDemandTask, {
+                reason: "news_request_cache_empty"
+              });
+              console.log(
+                `[News] fastMode fallback served ${canonicalKeyword} ${region}/${lang} feed=${feedLang}`
+              );
+            }
+          }
+        } catch (error) {
+          console.error(
+            "[News] fastMode fallback failed",
+            canonicalKeyword,
+            error?.message || error
+          );
+        }
+      }
+    }
+
     if (items && items.length && items.some((item) => item?.processing)) {
+      const onlyProcessing = items.every((item) => item?.processing === true);
       enqueueProcessingRecoveryIfNeeded(
         {
           keyword: canonicalKeyword,
@@ -11074,7 +12242,10 @@ app.get("/news", async (req, res) => {
           limit: 20
         },
         req,
-        { items }
+        {
+          items,
+          force: refreshRequested && onlyProcessing
+        }
       )
         .then((result) => {
           if (result?.ok && result.reason === "queued") {
@@ -11367,9 +12538,32 @@ app.get("/cron/refresh", async (req, res) => {
       console.error("[CronRefresh] userMaintenance failed", error?.message || error);
     }
 
+    let onestoreRefunds = null;
+    try {
+      onestoreRefunds = await reconcileOneStoreRefunds();
+      if (
+        onestoreRefunds &&
+        (onestoreRefunds.checked > 0 ||
+          onestoreRefunds.refunded > 0 ||
+          onestoreRefunds.errors > 0)
+      ) {
+        console.log(
+          `[CronRefresh] onestoreRefunds processed=${onestoreRefunds.processed} checked=${onestoreRefunds.checked} refunded=${onestoreRefunds.refunded} skipped=${onestoreRefunds.skipped} errors=${onestoreRefunds.errors}`
+        );
+      }
+    } catch (error) {
+      console.error(
+        "[CronRefresh] onestoreRefunds failed",
+        error?.message || error
+      );
+    }
+
     const payload = { ok: true, crawl: crawlResult, push: pushResult };
     if (maintenance) {
       payload.maintenance = maintenance;
+    }
+    if (onestoreRefunds) {
+      payload.onestoreRefunds = onestoreRefunds;
     }
     res.json(payload);
   } catch (error) {
@@ -11432,9 +12626,32 @@ app.get("/cron/crawl", async (req, res) => {
       console.error("[CronCrawl] userMaintenance failed", error?.message || error);
     }
 
+    let onestoreRefunds = null;
+    try {
+      onestoreRefunds = await reconcileOneStoreRefunds();
+      if (
+        onestoreRefunds &&
+        (onestoreRefunds.checked > 0 ||
+          onestoreRefunds.refunded > 0 ||
+          onestoreRefunds.errors > 0)
+      ) {
+        console.log(
+          `[CronCrawl] onestoreRefunds processed=${onestoreRefunds.processed} checked=${onestoreRefunds.checked} refunded=${onestoreRefunds.refunded} skipped=${onestoreRefunds.skipped} errors=${onestoreRefunds.errors}`
+        );
+      }
+    } catch (error) {
+      console.error(
+        "[CronCrawl] onestoreRefunds failed",
+        error?.message || error
+      );
+    }
+
     const payload = { ok: true, crawl: crawlResult };
     if (maintenance) {
       payload.maintenance = maintenance;
+    }
+    if (onestoreRefunds) {
+      payload.onestoreRefunds = onestoreRefunds;
     }
     res.json(payload);
   } catch (error) {
@@ -11446,6 +12663,45 @@ app.get("/cron/crawl", async (req, res) => {
         await releaseCronLock("news_crawl", lockRunId);
       } catch (error) {
         console.error("[CronCrawl] unlock failed", error?.message || error);
+      }
+    }
+  }
+});
+
+app.get("/cron/onestore-refunds", async (req, res) => {
+  let lockRunId = null;
+  try {
+    const lock = await acquireCronLock(
+      "onestore_refund_reconcile",
+      CRON_LOCK_TTL_MS
+    );
+    if (!lock.ok) {
+      const status = lock.error === "locked" ? 429 : 503;
+      return res.status(status).json({
+        ok: false,
+        error: "cron_locked",
+        lockedAt: lock.lockedAt || null,
+        expiresAt: lock.expiresAt || null
+      });
+    }
+    lockRunId = lock.runId;
+    const batchSize = Number.parseInt(req.query.batchSize || "", 10);
+    const result = await reconcileOneStoreRefunds({
+      batchSize: Number.isFinite(batchSize) ? batchSize : undefined
+    });
+    return res.json({ ok: true, onestoreRefunds: result });
+  } catch (error) {
+    console.error("[CronOneStoreRefunds] failed", error?.message || error);
+    return res.status(500).json({ ok: false, error: "cron_failed" });
+  } finally {
+    if (lockRunId) {
+      try {
+        await releaseCronLock("onestore_refund_reconcile", lockRunId);
+      } catch (error) {
+        console.error(
+          "[CronOneStoreRefunds] unlock failed",
+          error?.message || error
+        );
       }
     }
   }

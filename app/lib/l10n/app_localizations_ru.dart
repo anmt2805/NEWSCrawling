@@ -410,6 +410,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get retry => 'Повторить';
 
   @override
+  String get purchaseFailedCheckPayment =>
+      'Покупка не удалась. Проверьте доступность покупки и способ оплаты, затем попробуйте снова.';
+
+  @override
   String get settingsTitle => 'Настройки';
 
   @override

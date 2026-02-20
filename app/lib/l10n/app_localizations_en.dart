@@ -408,6 +408,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get retry => 'Retry';
 
   @override
+  String get purchaseFailedCheckPayment =>
+      'Purchase failed. Please check purchase availability and payment method, then try again.';
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override

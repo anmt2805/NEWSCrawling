@@ -7,7 +7,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:news_crawl/l10n/app_localizations.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -22,10 +21,13 @@ import 'package:crypto/crypto.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:introduction_screen/introduction_screen.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:in_app_purchase/in_app_purchase.dart'
+    hide ProductDetailsResponse;
 import 'package:in_app_purchase_android/in_app_purchase_android.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:intl/intl.dart' hide TextDirection;
+import 'package:flutter_onestore_inapp/flutter_onestore_inapp.dart';
+import 'package:unity_ads_plugin/unity_ads_plugin.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 const String apiBaseUrl =
@@ -36,6 +38,30 @@ const String _freeTranslationUsedKey = 'freeTranslationUsed';
 const String _guestSyncAtKey = 'guestSyncAt';
 const String _admobBannerId = 'ca-app-pub-4338188988925499/9794490659';
 const String _admobRewardedId = 'ca-app-pub-4338188988925499/2298325772';
+const String _unityGameIdAndroid = String.fromEnvironment(
+  'UNITY_GAME_ID_ANDROID',
+  defaultValue: '6032938',
+);
+const String _unityBannerPlacementIdAndroid = String.fromEnvironment(
+  'UNITY_BANNER_PLACEMENT_ID_ANDROID',
+  defaultValue: 'FALLBACKBANNER',
+);
+const String _unityRewardedPlacementIdAndroid = String.fromEnvironment(
+  'UNITY_REWARDED_PLACEMENT_ID_ANDROID',
+  defaultValue: 'FALLBACKAI',
+);
+const bool _unityAdsTestMode = bool.fromEnvironment(
+  'UNITY_ADS_TEST_MODE',
+  defaultValue: false,
+);
+const bool _forceUnityAdsFallback = bool.fromEnvironment(
+  'FORCE_UNITY_ADS_FALLBACK',
+  defaultValue: false,
+);
+const bool _adsDebugToast = bool.fromEnvironment(
+  'ADS_DEBUG_TOAST',
+  defaultValue: false,
+);
 const String _accountDeletionUrl = 'https://forms.gle/USYUJGbfAmnwfQZZA';
 const String _googleWebClientId =
     '442218050266-7t8egh8fpn4jvq1vhqs1kn8bdlhmocro.apps.googleusercontent.com';
@@ -56,6 +82,28 @@ class _ReviewPromptResult {
 
   final int rating;
   final _ReviewPromptAction action;
+}
+
+enum _AndroidBillingStore { play, onestore }
+
+class _StoreProduct {
+  const _StoreProduct({
+    required this.id,
+    required this.title,
+    required this.price,
+    required this.rawPrice,
+    required this.currencyCode,
+    this.playProduct,
+    this.oneStoreProduct,
+  });
+
+  final String id;
+  final String title;
+  final String price;
+  final double rawPrice;
+  final String currencyCode;
+  final ProductDetails? playProduct;
+  final ProductDetail? oneStoreProduct;
 }
 
 String _privacyPolicyAssetForLanguage(String language) {
@@ -98,6 +146,108 @@ const String _notificationLangHistoryKey = 'notificationLangHistory';
 
 int _serverTimeOffsetMs = 0;
 int _lastRateLimitToastAtMs = 0;
+Completer<bool>? _unityAdsInitCompleter;
+bool _unityAdsInitialized = false;
+
+bool get _unityAdsSupportedPlatform {
+  if (kIsWeb) return false;
+  return defaultTargetPlatform == TargetPlatform.android;
+}
+
+bool get _unityAdsConfigured {
+  return _unityAdsSupportedPlatform && _unityGameIdAndroid.trim().isNotEmpty;
+}
+
+bool get _unityBannerFallbackConfigured {
+  return _unityAdsConfigured &&
+      _unityBannerPlacementIdAndroid.trim().isNotEmpty;
+}
+
+bool get _unityRewardedFallbackConfigured {
+  return _unityAdsConfigured &&
+      _unityRewardedPlacementIdAndroid.trim().isNotEmpty;
+}
+
+Future<bool> _ensureUnityAdsInitialized() async {
+  if (!_unityAdsConfigured) return false;
+  if (_unityAdsInitialized) {
+    try {
+      final initialized = await UnityAds.isInitialized();
+      if (initialized) {
+        return true;
+      }
+    } catch (_) {}
+    _unityAdsInitialized = false;
+  }
+  if (_unityAdsInitCompleter != null) {
+    return _unityAdsInitCompleter!.future;
+  }
+  final completer = Completer<bool>();
+  _unityAdsInitCompleter = completer;
+  try {
+    await UnityAds.init(
+      gameId: _unityGameIdAndroid,
+      testMode: _unityAdsTestMode,
+      onComplete: (_) {
+        if (_unityAdsInitialized) return;
+        _unityAdsInitialized = true;
+        if (!completer.isCompleted) {
+          completer.complete(true);
+        }
+      },
+      onFailed: (error, message) {
+        debugPrint('[AD DEBUG] Unity Ads init failed [$error] $message');
+        if (!completer.isCompleted) {
+          completer.complete(false);
+        }
+      },
+    );
+  } catch (error) {
+    debugPrint('[AD DEBUG] Unity Ads init exception: $error');
+    if (!completer.isCompleted) {
+      completer.complete(false);
+    }
+  }
+  var timedOut = false;
+  final ok = await completer.future.timeout(
+    const Duration(seconds: 12),
+    onTimeout: () {
+      timedOut = true;
+      return false;
+    },
+  );
+  var initialized = ok;
+  if (timedOut) {
+    // Some devices miss the init callback. Poll SDK state briefly before failing.
+    final deadline = DateTime.now().add(const Duration(seconds: 8));
+    while (DateTime.now().isBefore(deadline)) {
+      try {
+        if (await UnityAds.isInitialized()) {
+          initialized = true;
+          break;
+        }
+      } catch (_) {}
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
+  }
+  if (timedOut && !initialized) {
+    debugPrint('[AD DEBUG] Unity Ads init timed out. SDK not initialized yet.');
+  }
+  if (!initialized) {
+    debugPrint('[AD DEBUG] Unity Ads init failed.');
+    _unityAdsInitCompleter = null;
+    _unityAdsInitialized = false;
+    if (!completer.isCompleted) {
+      completer.complete(false);
+    }
+    return false;
+  }
+  _unityAdsInitialized = true;
+  if (!completer.isCompleted) {
+    completer.complete(true);
+  }
+  return true;
+}
 
 DateTime _serverNow() {
   final now = DateTime.now();
@@ -919,9 +1069,7 @@ ThemeData _buildScoopTheme(Brightness brightness) {
     inversePrimary: isDark ? const Color(0xFF3A4E7A) : const Color(0xFF8FB3FF),
   );
 
-  final baseTextTheme = GoogleFonts.manropeTextTheme(
-    ThemeData(brightness: brightness).textTheme,
-  );
+  final baseTextTheme = ThemeData(brightness: brightness).textTheme;
   final textTheme = baseTextTheme.copyWith(
     headlineMedium: baseTextTheme.headlineMedium?.copyWith(
       fontWeight: FontWeight.w700,
@@ -1165,6 +1313,9 @@ Future<void> _bootstrapDeferredServices() async {
   unawaited(_syncServerTime());
   try {
     await MobileAds.instance.initialize();
+  } catch (_) {}
+  try {
+    await _ensureUnityAdsInitialized();
   } catch (_) {}
   try {
     await NotificationService.init();
@@ -2198,14 +2349,22 @@ class _NewsHomePageState extends State<NewsHomePage>
   late final Animation<double> _sheetAnimation;
   Rect? _sheetStartRect;
   Rect? _sheetEndRect;
+  static const MethodChannel _appConfigChannel = MethodChannel(
+    'com.anmt2805.news_crawl/app_config',
+  );
   final InAppPurchase _iap = InAppPurchase.instance;
+  OneStoreAuthClient? _oneStoreAuthClient;
+  PurchaseClientManager? _oneStoreIap;
   StreamSubscription<List<PurchaseDetails>>? _iapPurchaseSub;
+  StreamSubscription<List<PurchaseData>>? _oneStorePurchaseSub;
+  bool _oneStoreIapInitialized = false;
+  _AndroidBillingStore _androidBillingStore = _AndroidBillingStore.play;
   bool _iapAvailable = false;
   bool _iapLoading = false;
   bool _iapPurchaseInFlight = false;
   String _iapError = '';
   final Map<String, int> _iapProductTokens = {};
-  List<ProductDetails> _iapProducts = [];
+  List<_StoreProduct> _iapProducts = [];
 
   Future<void> _debugShowReviewPrompt() async {
     final prefs = await SharedPreferences.getInstance();
@@ -2490,6 +2649,8 @@ class _NewsHomePageState extends State<NewsHomePage>
     _pushRefreshSub?.cancel();
     _tokenRefreshSub?.cancel();
     _iapPurchaseSub?.cancel();
+    _oneStorePurchaseSub?.cancel();
+    _oneStoreIap?.dispose();
     _prefetchPollTimer?.cancel();
     _processingPollTimer?.cancel();
     _notificationTick.removeListener(_handleNotificationTick);
@@ -3192,6 +3353,16 @@ class _NewsHomePageState extends State<NewsHomePage>
   String _syncModeKey(String uid) => 'syncMode_$uid';
   String _pendingKeywordSyncKey(String uid) => 'pendingKeywordSync_$uid';
 
+  Future<void> _setPendingUserStateSync(
+    bool pending, {
+    String? uidOverride,
+  }) async {
+    final uid = (uidOverride ?? _user?.uid ?? '').trim();
+    if (uid.isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_pendingKeywordSyncKey(uid), pending);
+  }
+
   void _applyUserState(_UserStateSnapshot snapshot) {
     setState(() {
       _tokenBalance = snapshot.tokenBalance;
@@ -3275,25 +3446,34 @@ class _NewsHomePageState extends State<NewsHomePage>
 
   Future<bool> _saveUserStateToFirestore() async {
     final user = _user;
-    if (user == null) return false;
-    final payload = await _postWithAuth('/users/state', {
-      'tabKeywords': _keywords,
-      'tabRegions': _tabRegions,
-      'canonicalKeywords': _canonicalKeywords.map(
-        (key, value) => MapEntry(key.toString(), value),
-      ),
-      'notificationPrefs': _notificationPrefs.toJson(),
-      'autoRenewEnabled': _autoRenewEnabled,
-      'language': _language,
-    });
-    final serverTimeMs = int.tryParse(
-      payload?['serverTimeMs']?.toString() ?? '',
-    );
-    if (serverTimeMs != null) {
-      await _updateServerTimeOffset(serverTimeMs);
+    final uid = (user?.uid ?? '').trim();
+    if (uid.isEmpty) return false;
+    var synced = false;
+    try {
+      final payload = await _postWithAuth('/users/state', {
+        'tabKeywords': _keywords,
+        'tabRegions': _tabRegions,
+        'canonicalKeywords': _canonicalKeywords.map(
+          (key, value) => MapEntry(key.toString(), value),
+        ),
+        'notificationPrefs': _notificationPrefs.toJson(),
+        'autoRenewEnabled': _autoRenewEnabled,
+        'language': _language,
+      });
+      final serverTimeMs = int.tryParse(
+        payload?['serverTimeMs']?.toString() ?? '',
+      );
+      if (serverTimeMs != null) {
+        await _updateServerTimeOffset(serverTimeMs);
+      }
+      final status =
+          int.tryParse(payload?['statusCode']?.toString() ?? '') ?? 0;
+      synced = status >= 200 && status < 300;
+    } catch (_) {
+      synced = false;
     }
-    final status = int.tryParse(payload?['statusCode']?.toString() ?? '') ?? 0;
-    return status >= 200 && status < 300;
+    await _setPendingUserStateSync(!synced, uidOverride: uid);
+    return synced;
   }
 
   Future<void> _loadSavedArticlesFromServer() async {
@@ -3560,10 +3740,38 @@ class _NewsHomePageState extends State<NewsHomePage>
     return defaultTargetPlatform == TargetPlatform.android;
   }
 
+  String get _currentIapStoreType {
+    return _androidBillingStore == _AndroidBillingStore.onestore
+        ? 'onestore'
+        : 'play';
+  }
+
+  Future<_AndroidBillingStore> _resolveAndroidBillingStore() async {
+    if (!_iapSupportedPlatform) return _AndroidBillingStore.play;
+    try {
+      final flavor =
+          (await _appConfigChannel.invokeMethod<String>('storeFlavor') ?? '')
+              .toLowerCase();
+      if (flavor.contains('onestore')) {
+        return _AndroidBillingStore.onestore;
+      }
+    } catch (_) {}
+    return _AndroidBillingStore.play;
+  }
+
   Future<void> _initIap() async {
     if (!_iapSupportedPlatform) return;
+    _androidBillingStore = await _resolveAndroidBillingStore();
+    if (_androidBillingStore == _AndroidBillingStore.onestore) {
+      await _initOneStoreIap();
+      return;
+    }
+    await _initPlayIap();
+  }
+
+  Future<void> _initPlayIap() async {
     _iapPurchaseSub ??= _iap.purchaseStream.listen(
-      _handlePurchaseUpdates,
+      _handlePlayPurchaseUpdates,
       onError: (error) {
         if (!mounted) return;
         setState(() {
@@ -3588,8 +3796,67 @@ class _NewsHomePageState extends State<NewsHomePage>
     await _recoverPendingPurchases();
   }
 
+  Future<void> _initOneStoreIap() async {
+    try {
+      await _ensureOneStoreClientInitialized();
+      if (!mounted) return;
+      setState(() {
+        _iapAvailable = true;
+        _iapError = '';
+      });
+      await _loadIapProducts();
+      await _recoverPendingPurchases();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _iapAvailable = false;
+        _iapError = 'ONE store unavailable.';
+      });
+      debugPrint('ONE store init failed: $error');
+    }
+  }
+
+  Future<void> _ensureOneStoreClientInitialized() async {
+    _oneStoreAuthClient ??= OneStoreAuthClient();
+    _oneStoreIap ??= PurchaseClientManager.instance;
+    if (!_oneStoreIapInitialized) {
+      _oneStoreIap!.initialize();
+      _oneStoreIapInitialized = true;
+    }
+    _oneStorePurchaseSub ??= _oneStoreIap!.purchasesUpdatedStream.listen(
+      _handleOneStorePurchaseUpdates,
+      onError: (error) {
+        if (!mounted) return;
+        setState(() {
+          _iapPurchaseInFlight = false;
+          if (error is IapResult) {
+            _iapError = _oneStoreErrorMessage(error);
+          } else {
+            _iapError = 'Purchase stream error.';
+          }
+        });
+      },
+    );
+  }
+
   Future<void> _loadIapProducts() async {
     if (!_iapSupportedPlatform) return;
+    if (_androidBillingStore == _AndroidBillingStore.onestore) {
+      await _loadOneStoreIapProducts();
+      return;
+    }
+    await _loadPlayIapProducts();
+  }
+
+  Future<void> _retryIapProducts() async {
+    if (_iapSupportedPlatform &&
+        _androidBillingStore == _AndroidBillingStore.onestore) {
+      await _recoverOneStorePendingPurchases();
+    }
+    await _loadIapProducts();
+  }
+
+  Future<void> _loadPlayIapProducts() async {
     setState(() {
       _iapLoading = true;
       _iapError = '';
@@ -3615,12 +3882,90 @@ class _NewsHomePageState extends State<NewsHomePage>
     _iapProductTokens
       ..clear()
       ..addAll(productMap);
-    _iapProducts = response.productDetails.toList()
-      ..sort((a, b) {
-        final tokensA = _iapProductTokens[a.id] ?? 0;
-        final tokensB = _iapProductTokens[b.id] ?? 0;
-        return tokensA.compareTo(tokensB);
+    _iapProducts =
+        response.productDetails
+            .map(
+              (product) => _StoreProduct(
+                id: product.id,
+                title: product.title,
+                price: product.price,
+                rawPrice: product.rawPrice,
+                currencyCode: product.currencyCode,
+                playProduct: product,
+              ),
+            )
+            .toList()
+          ..sort((a, b) {
+            final tokensA = _iapProductTokens[a.id] ?? 0;
+            final tokensB = _iapProductTokens[b.id] ?? 0;
+            return tokensA.compareTo(tokensB);
+          });
+    setState(() {
+      _iapLoading = false;
+    });
+  }
+
+  Future<void> _loadOneStoreIapProducts() async {
+    await _ensureOneStoreClientInitialized();
+    setState(() {
+      _iapLoading = true;
+      _iapError = '';
+    });
+    final productMap = await _fetchIapProductMap();
+    if (!mounted) return;
+    if (productMap.isEmpty) {
+      setState(() {
+        _iapLoading = false;
+        _iapError = 'No products available.';
       });
+      return;
+    }
+
+    ProductDetailsResponse response = await _oneStoreIap!.queryProductDetails(
+      productIds: productMap.keys.toList(),
+      productType: ProductType.inapp,
+    );
+    if (!response.iapResult.isSuccess()) {
+      final recovered = await _tryRecoverOneStoreSession(response.iapResult);
+      if (recovered) {
+        response = await _oneStoreIap!.queryProductDetails(
+          productIds: productMap.keys.toList(),
+          productType: ProductType.inapp,
+        );
+      }
+    }
+    if (!mounted) return;
+    if (!response.iapResult.isSuccess()) {
+      setState(() {
+        _iapLoading = false;
+        _iapError = _oneStoreErrorMessage(response.iapResult);
+      });
+      return;
+    }
+
+    _iapProductTokens
+      ..clear()
+      ..addAll(productMap);
+    _iapProducts =
+        response.productDetailsList
+            .map(
+              (product) => _StoreProduct(
+                id: product.productId,
+                title: product.title,
+                price: product.price,
+                rawPrice: _oneStorePriceAsDouble(product.priceAmountMicros),
+                currencyCode: product.priceCurrencyCode,
+                oneStoreProduct: product,
+              ),
+            )
+            .where((product) => _iapProductTokens.containsKey(product.id))
+            .toList()
+          ..sort((a, b) {
+            final tokensA = _iapProductTokens[a.id] ?? 0;
+            final tokensB = _iapProductTokens[b.id] ?? 0;
+            return tokensA.compareTo(tokensB);
+          });
+
     setState(() {
       _iapLoading = false;
     });
@@ -3630,6 +3975,14 @@ class _NewsHomePageState extends State<NewsHomePage>
     if (!_iapSupportedPlatform) return;
     if (_user == null) return;
     if (!_iapAvailable) return;
+    if (_androidBillingStore == _AndroidBillingStore.onestore) {
+      await _recoverOneStorePendingPurchases();
+      return;
+    }
+    await _recoverPlayPendingPurchases();
+  }
+
+  Future<void> _recoverPlayPendingPurchases() async {
     try {
       final androidAddition = _iap
           .getPlatformAddition<InAppPurchaseAndroidPlatformAddition>();
@@ -3641,7 +3994,7 @@ class _NewsHomePageState extends State<NewsHomePage>
       for (final purchase in response.pastPurchases) {
         if (purchase.status == PurchaseStatus.purchased ||
             purchase.status == PurchaseStatus.restored) {
-          final verified = await _verifyPurchaseWithServer(purchase);
+          final verified = await _verifyPlayPurchaseWithServer(purchase);
           if (verified && purchase.pendingCompletePurchase) {
             await _iap.completePurchase(purchase);
           }
@@ -3652,9 +4005,47 @@ class _NewsHomePageState extends State<NewsHomePage>
     }
   }
 
+  Future<void> _recoverOneStorePendingPurchases() async {
+    try {
+      await _ensureOneStoreClientInitialized();
+      PurchasesResultResponse response = await _oneStoreIap!.queryPurchases(
+        productType: ProductType.inapp,
+      );
+      if (!response.iapResult.isSuccess()) {
+        final recovered = await _tryRecoverOneStoreSession(response.iapResult);
+        if (recovered) {
+          response = await _oneStoreIap!.queryPurchases(
+            productType: ProductType.inapp,
+          );
+        }
+      }
+      if (!response.iapResult.isSuccess()) {
+        debugPrint('ONE store past purchases error: ${response.iapResult}');
+        return;
+      }
+
+      for (final purchase in response.purchasesList) {
+        if (purchase.purchaseState != PurchaseState.purchased) continue;
+        final verified = await _verifyOneStorePurchaseWithServer(purchase);
+        if (!verified) continue;
+        final consumeResult = await _oneStoreIap!.consumePurchase(
+          purchaseData: purchase,
+        );
+        if (!consumeResult.isSuccess()) {
+          debugPrint('ONE store consume failed: ${consumeResult.message}');
+        }
+      }
+    } catch (error) {
+      debugPrint('ONE store past purchases failed: $error');
+    }
+  }
+
   Future<Map<String, int>> _fetchIapProductMap() async {
     try {
-      final response = await http.get(Uri.parse('$apiBaseUrl/iap/products'));
+      final uri = Uri.parse(
+        '$apiBaseUrl/iap/products',
+      ).replace(queryParameters: {'storeType': _currentIapStoreType});
+      final response = await http.get(uri);
       if (response.statusCode != 200) return {};
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
       if (decoded['ok'] != true) return {};
@@ -3680,7 +4071,9 @@ class _NewsHomePageState extends State<NewsHomePage>
     }
   }
 
-  Future<void> _handlePurchaseUpdates(List<PurchaseDetails> purchases) async {
+  Future<void> _handlePlayPurchaseUpdates(
+    List<PurchaseDetails> purchases,
+  ) async {
     for (final purchase in purchases) {
       if (purchase.status == PurchaseStatus.pending) {
         if (mounted) {
@@ -3710,7 +4103,7 @@ class _NewsHomePageState extends State<NewsHomePage>
       if (purchase.status == PurchaseStatus.purchased ||
           purchase.status == PurchaseStatus.restored) {
         try {
-          final verified = await _verifyPurchaseWithServer(purchase);
+          final verified = await _verifyPlayPurchaseWithServer(purchase);
           if (verified && purchase.pendingCompletePurchase) {
             await _iap.completePurchase(purchase);
           }
@@ -3730,7 +4123,44 @@ class _NewsHomePageState extends State<NewsHomePage>
     }
   }
 
-  Future<bool> _verifyPurchaseWithServer(PurchaseDetails purchase) async {
+  Future<void> _handleOneStorePurchaseUpdates(
+    List<PurchaseData> purchases,
+  ) async {
+    for (final purchase in purchases) {
+      if (purchase.purchaseState != PurchaseState.purchased) {
+        if (mounted) {
+          setState(() {
+            _iapPurchaseInFlight = false;
+          });
+        }
+        continue;
+      }
+      try {
+        final verified = await _verifyOneStorePurchaseWithServer(purchase);
+        if (verified) {
+          final consumeResult = await _oneStoreIap!.consumePurchase(
+            purchaseData: purchase,
+          );
+          if (!consumeResult.isSuccess()) {
+            debugPrint('ONE store consume failed: ${consumeResult.message}');
+          }
+        }
+      } catch (error) {
+        debugPrint('ONE store purchase handling failed: $error');
+        if (mounted) {
+          _showIapMessage('Purchase verification failed.');
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _iapPurchaseInFlight = false;
+          });
+        }
+      }
+    }
+  }
+
+  Future<bool> _verifyPlayPurchaseWithServer(PurchaseDetails purchase) async {
     if (_user == null) {
       _showIapMessage('Login required.');
       return false;
@@ -3751,8 +4181,41 @@ class _NewsHomePageState extends State<NewsHomePage>
         'productId': purchase.productID,
         'purchaseToken': purchaseToken,
         'platform': 'android',
+        'storeType': 'play',
       }),
     );
+    return _applyVerifiedPurchaseResponse(response);
+  }
+
+  Future<bool> _verifyOneStorePurchaseWithServer(PurchaseData purchase) async {
+    if (_user == null) {
+      _showIapMessage('Login required.');
+      return false;
+    }
+    final purchaseToken = purchase.purchaseToken;
+    if (purchaseToken.isEmpty) {
+      _showIapMessage('Invalid purchase token.');
+      return false;
+    }
+    final idToken = await _user!.getIdToken();
+    final response = await http.post(
+      Uri.parse('$apiBaseUrl/iap/verify'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $idToken',
+      },
+      body: jsonEncode({
+        'productId': purchase.productId,
+        'purchaseToken': purchaseToken,
+        'platform': 'android',
+        'storeType': 'onestore',
+        'marketCode': _oneStoreMarketCode,
+      }),
+    );
+    return _applyVerifiedPurchaseResponse(response);
+  }
+
+  Future<bool> _applyVerifiedPurchaseResponse(http.Response response) async {
     if (response.statusCode == 403) {
       try {
         final decoded = jsonDecode(response.body);
@@ -3799,7 +4262,7 @@ class _NewsHomePageState extends State<NewsHomePage>
     return true;
   }
 
-  Future<void> _buyProduct(ProductDetails product) async {
+  Future<void> _buyProduct(_StoreProduct product) async {
     if (_iapPurchaseInFlight) return;
     final loc = AppLocalizations.of(context)!;
     if (_user == null) {
@@ -3821,10 +4284,23 @@ class _NewsHomePageState extends State<NewsHomePage>
       }
       return;
     }
+    if (_androidBillingStore == _AndroidBillingStore.onestore) {
+      await _buyOneStoreProduct(product);
+      return;
+    }
+    await _buyPlayProduct(product);
+  }
+
+  Future<void> _buyPlayProduct(_StoreProduct product) async {
+    final playProduct = product.playProduct;
+    if (playProduct == null) {
+      _showIapMessage('Unable to start purchase.');
+      return;
+    }
     setState(() {
       _iapPurchaseInFlight = true;
     });
-    final purchaseParam = PurchaseParam(productDetails: product);
+    final purchaseParam = PurchaseParam(productDetails: playProduct);
     bool started = false;
     try {
       started = await _iap.buyConsumable(
@@ -3847,6 +4323,105 @@ class _NewsHomePageState extends State<NewsHomePage>
       });
       _showIapMessage('Unable to start purchase.');
     }
+  }
+
+  Future<void> _buyOneStoreProduct(_StoreProduct product) async {
+    await _ensureOneStoreClientInitialized();
+    final oneStoreProduct = product.oneStoreProduct;
+    if (oneStoreProduct == null) {
+      _showIapMessage('Unable to start purchase.');
+      return;
+    }
+
+    setState(() {
+      _iapPurchaseInFlight = true;
+    });
+    IapResult result = await _oneStoreIap!.launchPurchaseFlow(
+      productDetail: oneStoreProduct,
+    );
+    if (!result.isSuccess()) {
+      final recovered = await _tryRecoverOneStoreSession(result);
+      if (recovered) {
+        result = await _oneStoreIap!.launchPurchaseFlow(
+          productDetail: oneStoreProduct,
+        );
+      }
+    }
+    if (result.responseCode == PurchaseResponse.itemAlreadyOwned) {
+      await _recoverOneStorePendingPurchases();
+      result = await _oneStoreIap!.launchPurchaseFlow(
+        productDetail: oneStoreProduct,
+      );
+    }
+    if (!result.isSuccess()) {
+      if (mounted) {
+        setState(() {
+          _iapPurchaseInFlight = false;
+        });
+      }
+      _showIapMessage(_oneStoreErrorMessage(result));
+    }
+  }
+
+  Future<bool> _tryRecoverOneStoreSession(IapResult result) async {
+    if (result.responseCode == PurchaseResponse.needLogin) {
+      _oneStoreAuthClient ??= OneStoreAuthClient();
+      final signInResult = await _oneStoreAuthClient!.launchSignInFlow();
+      if (signInResult.isSuccess()) return true;
+      if (signInResult.code == AuthResponse.userCanceled) {
+        _showIapMessage('ONE store login canceled.');
+      } else {
+        _showIapMessage('ONE store login failed.');
+      }
+      return false;
+    }
+    if (result.responseCode == PurchaseResponse.needUpdate ||
+        result.responseCode == PurchaseResponse.updateOrInstall) {
+      try {
+        await _oneStoreIap?.launchUpdateOrInstall();
+      } catch (_) {}
+      _showIapMessage('Please update/install ONE store.');
+      return false;
+    }
+    return false;
+  }
+
+  String _oneStoreErrorMessage(IapResult result) {
+    final loc = AppLocalizations.of(context)!;
+    final code = result.responseCode;
+    if (code == PurchaseResponse.userCanceled) return 'Purchase canceled.';
+    if (code == PurchaseResponse.itemAlreadyOwned) {
+      return 'Owned item detected. Please try again after recovery.';
+    }
+    if (code == PurchaseResponse.needLogin) return 'ONE store login required.';
+    if (code == PurchaseResponse.needUpdate ||
+        code == PurchaseResponse.updateOrInstall) {
+      return 'Please update/install ONE store.';
+    }
+    final msg = (result.message ?? '').trim();
+    if (msg.isNotEmpty) {
+      final normalized = msg.toLowerCase();
+      final isGenericPurchaseFailure =
+          normalized.contains('결제에 실패했습니다') ||
+          normalized.contains('purchase failed');
+      if (isGenericPurchaseFailure) {
+        return loc.purchaseFailedCheckPayment;
+      }
+      return msg;
+    }
+    return loc.purchaseFailedCheckPayment;
+  }
+
+  double _oneStorePriceAsDouble(String priceAmountMicros) {
+    final micros = num.tryParse(priceAmountMicros)?.toDouble() ?? 0;
+    if (micros <= 0) return 0;
+    return micros / 1000000;
+  }
+
+  String get _oneStoreMarketCode {
+    final code = (_oneStoreIap?.storeCode ?? '').trim().toUpperCase();
+    if (code == 'MKT_ONE' || code == 'MKT_GLB') return code;
+    return '';
   }
 
   void _showIapMessage(String message) {
@@ -4321,8 +4896,8 @@ class _NewsHomePageState extends State<NewsHomePage>
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: ListView(
+                padding: EdgeInsets.zero,
                 children: [
                   Text(
                     loc.googleAccount,
@@ -4390,7 +4965,7 @@ class _NewsHomePageState extends State<NewsHomePage>
                       ),
                     ),
                   ],
-                  const Spacer(),
+                  const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
@@ -4483,10 +5058,7 @@ class _NewsHomePageState extends State<NewsHomePage>
                   ),
                 ),
               ),
-              TextButton(
-                onPressed: _loadIapProducts,
-                child: const Text('Retry'),
-              ),
+              TextButton(onPressed: _retryIapProducts, child: Text(loc.retry)),
             ],
           )
         else if (_iapProducts.isEmpty)
@@ -5807,6 +6379,10 @@ class _NewsHomePageState extends State<NewsHomePage>
     setState(() {
       _tabRegions[safeIndex] = nextRegion;
     });
+    if (_user != null) {
+      await _setPendingUserStateSync(true);
+    }
+    await _saveLocalState();
     if (keyword.isNotEmpty && previousRegion != nextRegion) {
       await _updateKeywordSubscription(
         keyword,
@@ -5826,7 +6402,6 @@ class _NewsHomePageState extends State<NewsHomePage>
         tabIndex: safeIndex,
       );
     }
-    await _saveLocalState();
     await _saveUserStateToFirestore();
     await _syncTopicSubscriptions();
     if (safeIndex == 0 && previousRegion != nextRegion) {
@@ -6868,15 +7443,39 @@ class _NewsListState extends State<NewsList> {
   bool _isSoftRefresh = false;
   bool _pullRefreshInProgress = false;
   static const int _bannerInterval = 6;
+  static const Duration _adRetryCooldown = Duration(hours: 1);
   static const int _processingEtaStartMinutes = 7;
   static const Duration _processingEtaTick = Duration(minutes: 1);
   static const Duration _processingEtaRetention = Duration(minutes: 30);
   final List<_BannerSlot> _bannerSlots = [];
+  int _bannerFailureStreak = 0;
+  DateTime? _bannerRetryAfter;
+  bool _unityBannerLoaded = false;
+  int _unityBannerFailureStreak = 0;
+  DateTime? _unityBannerRetryAfter;
   final Map<String, int> _processingSinceMs = {};
   Timer? _processingEtaTimer;
 
   String get _cacheKey {
     return '${widget.keyword}::${widget.region}::${widget.language ?? 'en'}::${widget.feedLanguage}::$_currentLimit';
+  }
+
+  bool get _showAdDebugToastEnabled => kDebugMode || _adsDebugToast;
+
+  void _showAdDebugToast(String message) {
+    debugPrint('[AD DEBUG][Feed] $message');
+    if (!mounted || !_showAdDebugToastEnabled) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_showAdDebugToastEnabled) return;
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      if (messenger == null) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('[AD] $message'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    });
   }
 
   void _syncProcessingEtaTracking(List<NewsItem> items) {
@@ -6968,6 +7567,9 @@ class _NewsListState extends State<NewsList> {
     super.initState();
     _currentLimit = widget.limit;
     _scrollController = ScrollController()..addListener(_handleScroll);
+    if (_unityBannerFallbackConfigured) {
+      unawaited(_ensureUnityAdsInitialized());
+    }
     _cachedItems = _newsCache[_cacheKey] ?? [];
     _syncProcessingEtaTracking(_cachedItems);
     _future = _fetchNews();
@@ -7106,6 +7708,14 @@ class _NewsListState extends State<NewsList> {
         return bTime.compareTo(aTime);
       });
       if (_isSoftRefresh && _cachedItems.isNotEmpty) {
+        if (_pullRefreshInProgress) {
+          _cachedItems = items;
+          _newsCache[_cacheKey] = _cachedItems;
+          _syncProcessingEtaTracking(_cachedItems);
+          _hasMore = items.length >= _currentLimit;
+          widget.onItemsLoaded?.call(items);
+          return items;
+        }
         final oldPixels = _scrollController.hasClients
             ? _scrollController.position.pixels
             : 0.0;
@@ -7121,11 +7731,26 @@ class _NewsListState extends State<NewsList> {
           final key = _articleKey(item);
           return latestByKey[key] ?? item;
         }).toList();
+        final retainedCached = updatedCached.where((item) {
+          final key = _articleKey(item);
+          if (latestByKey.containsKey(key)) return true;
+          // If a processing placeholder disappeared from latest response,
+          // drop it so "AI processing" cards don't stick forever.
+          return !item.processing;
+        }).toList();
         final newItems = items
             .where((item) => !existingKeys.contains(_articleKey(item)))
             .toList();
+        final mergeAndDedupe = <NewsItem>[...newItems, ...retainedCached];
+        final seenKeys = <String>{};
+        final mergedItems = mergeAndDedupe.where((item) {
+          final key = _articleKey(item);
+          if (seenKeys.contains(key)) return false;
+          seenKeys.add(key);
+          return true;
+        }).toList();
         if (newItems.isNotEmpty) {
-          _cachedItems = [...newItems, ...updatedCached];
+          _cachedItems = mergedItems;
           _newsCache[_cacheKey] = _cachedItems;
           _syncProcessingEtaTracking(_cachedItems);
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -7138,7 +7763,7 @@ class _NewsListState extends State<NewsList> {
             }
           });
         } else {
-          _cachedItems = updatedCached;
+          _cachedItems = mergedItems;
           _newsCache[_cacheKey] = _cachedItems;
           _syncProcessingEtaTracking(_cachedItems);
         }
@@ -7242,15 +7867,21 @@ class _NewsListState extends State<NewsList> {
 
   int _bannerCountFor(int itemCount) {
     if (itemCount <= 0) return 0;
-    if (itemCount < _bannerInterval) return 1;
-    var count = itemCount ~/ _bannerInterval;
-    if (itemCount % _bannerInterval == 0) {
-      count -= 1;
-    }
-    return count < 0 ? 0 : count;
+    // Show banner every N items and one more under the last article.
+    // When itemCount is divisible by N, the "every N" banner is already last.
+    return (itemCount / _bannerInterval).ceil();
   }
 
   void _ensureBannerSlots(int count) {
+    if (_forceUnityAdsFallback) {
+      if (_bannerSlots.isNotEmpty) {
+        for (final slot in _bannerSlots) {
+          slot.dispose();
+        }
+        _bannerSlots.clear();
+      }
+      return;
+    }
     if (_bannerSlots.length > count) {
       final extras = _bannerSlots.sublist(count);
       for (final slot in extras) {
@@ -7259,8 +7890,13 @@ class _NewsListState extends State<NewsList> {
       _bannerSlots.removeRange(count, _bannerSlots.length);
       return;
     }
+    final now = DateTime.now();
+    if (_bannerRetryAfter != null && now.isBefore(_bannerRetryAfter!)) {
+      return;
+    }
     while (_bannerSlots.length < count) {
       late _BannerSlot slot;
+      _showAdDebugToast('AdMob banner load start');
       final ad = BannerAd(
         size: AdSize.banner,
         adUnitId: _admobBannerId,
@@ -7269,15 +7905,23 @@ class _NewsListState extends State<NewsList> {
           onAdLoaded: (_) {
             if (!mounted) return;
             setState(() {
+              _bannerFailureStreak = 0;
+              _bannerRetryAfter = null;
               slot.loaded = true;
             });
+            _showAdDebugToast('AdMob banner loaded');
           },
           onAdFailedToLoad: (ad, error) {
             ad.dispose();
             if (!mounted) return;
             setState(() {
+              _bannerFailureStreak += 1;
+              _bannerRetryAfter = DateTime.now().add(_adRetryCooldown);
               _bannerSlots.remove(slot);
             });
+            _showAdDebugToast(
+              'AdMob banner failed [${error.code}] ${error.message}. retry in ${_adRetryCooldown.inMinutes}m',
+            );
           },
         ),
       );
@@ -7285,6 +7929,100 @@ class _NewsListState extends State<NewsList> {
       _bannerSlots.add(slot);
       ad.load();
     }
+  }
+
+  Widget _buildUnityBannerFallback(BuildContext context) {
+    if (!_unityBannerFallbackConfigured) {
+      return const SizedBox.shrink();
+    }
+    final now = DateTime.now();
+    if (_unityBannerRetryAfter != null &&
+        now.isBefore(_unityBannerRetryAfter!)) {
+      return const SizedBox.shrink();
+    }
+    if (!_unityAdsInitialized) {
+      unawaited(
+        _ensureUnityAdsInitialized().then((initialized) {
+          if (!mounted || !initialized) return;
+          setState(() {});
+        }),
+      );
+      return const SizedBox(
+        height: 70,
+        child: Center(
+          child: SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface.withOpacity(0.92),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: SizedBox(
+          width: 320,
+          height: 50,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              UnityBannerAd(
+                placementId: _unityBannerPlacementIdAndroid,
+                size: BannerSize.standard,
+                onLoad: (_) {
+                  if (!mounted) return;
+                  final shouldNotify = !_unityBannerLoaded;
+                  setState(() {
+                    _unityBannerLoaded = true;
+                    _unityBannerFailureStreak = 0;
+                    _unityBannerRetryAfter = null;
+                  });
+                  if (shouldNotify) {
+                    _showAdDebugToast('Unity banner loaded');
+                  }
+                },
+                onFailed: (placementId, error, message) {
+                  if (!mounted) return;
+                  final nextFailure = _unityBannerFailureStreak + 1;
+                  setState(() {
+                    _unityBannerLoaded = false;
+                    _unityBannerFailureStreak = nextFailure;
+                    _unityBannerRetryAfter = DateTime.now().add(
+                      _adRetryCooldown,
+                    );
+                  });
+                  _showAdDebugToast(
+                    'Unity banner failed [$error] $message. retry in ${_adRetryCooldown.inMinutes}m',
+                  );
+                },
+              ),
+              if (!_unityBannerLoaded)
+                const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildBannerAd(BuildContext context, _BannerSlot slot) {
@@ -7330,9 +8068,27 @@ class _NewsListState extends State<NewsList> {
   Widget _buildNewsList(List<NewsItem> items) {
     final visibleItems = _filterBlocked(items);
     final extra = _isLoadingMore ? 1 : 0;
-    final bannerCount = _bannerCountFor(visibleItems.length);
-    _ensureBannerSlots(bannerCount);
+    final desiredBannerCount = _bannerCountFor(visibleItems.length);
+    final admobBannerCount = _bannerCountFor(visibleItems.length);
+    _ensureBannerSlots(admobBannerCount);
+    final effectiveAdmobBannerCount = min(
+      admobBannerCount,
+      _bannerSlots.length,
+    );
+    final hasLoadedAdmobBanner = _bannerSlots.any((slot) => slot.loaded);
+    final now = DateTime.now();
+    final showUnityFallbackBanner =
+        _unityBannerFallbackConfigured &&
+        (_forceUnityAdsFallback ||
+            (_bannerFailureStreak > 0 && !hasLoadedAdmobBanner)) &&
+        visibleItems.isNotEmpty &&
+        (_unityBannerRetryAfter == null ||
+            now.isAfter(_unityBannerRetryAfter!));
+    final bannerCount = showUnityFallbackBanner
+        ? desiredBannerCount
+        : effectiveAdmobBannerCount;
     final contentCount = visibleItems.length + bannerCount;
+    final intervalWithAd = _bannerInterval + 1;
     return ListView.builder(
       controller: _scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
@@ -7351,25 +8107,17 @@ class _NewsListState extends State<NewsList> {
             ),
           );
         }
-        if (bannerCount == 1 && visibleItems.length < _bannerInterval) {
-          if (index == visibleItems.length) {
-            return _buildBannerAd(context, _bannerSlots.first);
-          }
-          final item = visibleItems[index];
-          return NewsCard(
-            item: item,
-            language: widget.language ?? 'en',
-            processingEtaText: _processingEtaTextFor(item),
-            isSaved: widget.isSaved?.call(item) ?? false,
-            onToggleSave: widget.onToggleSave,
-            onReport: widget.onReport,
-            onBlock: widget.onBlock,
-          );
-        }
-        final intervalWithAd = _bannerInterval + 1;
-        final isAdSlot = bannerCount > 0 && (index + 1) % intervalWithAd == 0;
+        final isRegularAdSlot =
+            bannerCount > 0 && (index + 1) % intervalWithAd == 0;
+        final isLastAdSlot = bannerCount > 0 && index == contentCount - 1;
+        final isAdSlot = isRegularAdSlot || isLastAdSlot;
         if (isAdSlot) {
-          final adSlotIndex = (index + 1) ~/ intervalWithAd - 1;
+          if (showUnityFallbackBanner) {
+            return _buildUnityBannerFallback(context);
+          }
+          final adSlotIndex = (isLastAdSlot && !isRegularAdSlot)
+              ? bannerCount - 1
+              : (index + 1) ~/ intervalWithAd - 1;
           if (adSlotIndex >= 0 && adSlotIndex < _bannerSlots.length) {
             return _buildBannerAd(context, _bannerSlots[adSlotIndex]);
           }
@@ -7807,6 +8555,8 @@ class ArticlePage extends StatefulWidget {
 
 enum SummaryLength { short, medium, long, full }
 
+enum _RewardAdResult { rewarded, shownNotRewarded, unavailable }
+
 class _TranslationGateResult {
   const _TranslationGateResult({
     required this.used,
@@ -7913,6 +8663,7 @@ class _ArticlePageState extends State<ArticlePage> {
   Future<void> _setSummaryPreference(SummaryLength length) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('summaryLength', length.name);
+    if (!mounted) return;
     setState(() {
       _summaryLength = length;
       _summaryContent = '';
@@ -8013,9 +8764,29 @@ class _ArticlePageState extends State<ArticlePage> {
     );
   }
 
+  bool get _showAdDebugToastEnabled => kDebugMode || _adsDebugToast;
+
+  void _showAdDebugToast(String message) {
+    debugPrint('[AD DEBUG][Article] $message');
+    if (!mounted || !_showAdDebugToastEnabled) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_showAdDebugToastEnabled) return;
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      if (messenger == null) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('[AD] $message'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    });
+  }
+
   void _loadRewardedAd() {
+    if (_forceUnityAdsFallback) return;
     if (_rewardedAdLoading || _rewardedAd != null) return;
     _rewardedAdLoading = true;
+    _showAdDebugToast('AdMob rewarded load start');
     RewardedAd.load(
       adUnitId: _admobRewardedId,
       request: const AdRequest(),
@@ -8023,26 +8794,145 @@ class _ArticlePageState extends State<ArticlePage> {
         onAdLoaded: (ad) {
           _rewardedAdLoading = false;
           _rewardedAd = ad;
+          _showAdDebugToast('AdMob rewarded loaded');
         },
-        onAdFailedToLoad: (_) {
+        onAdFailedToLoad: (error) {
           _rewardedAdLoading = false;
           _rewardedAd = null;
+          _showAdDebugToast(
+            'AdMob rewarded load failed [${error.code}] ${error.message}',
+          );
         },
       ),
     );
   }
 
   Future<RewardedAd?> _loadRewardedAdOnce() async {
+    _showAdDebugToast('AdMob rewarded one-shot load start');
     final completer = Completer<RewardedAd?>();
     RewardedAd.load(
       adUnitId: _admobRewardedId,
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
-        onAdLoaded: (ad) => completer.complete(ad),
-        onAdFailedToLoad: (_) => completer.complete(null),
+        onAdLoaded: (ad) {
+          _showAdDebugToast('AdMob rewarded one-shot loaded');
+          completer.complete(ad);
+        },
+        onAdFailedToLoad: (error) {
+          _showAdDebugToast(
+            'AdMob rewarded one-shot failed [${error.code}] ${error.message}',
+          );
+          completer.complete(null);
+        },
       ),
     );
-    return completer.future;
+    var timedOut = false;
+    final ad = await completer.future.timeout(
+      const Duration(seconds: 12),
+      onTimeout: () {
+        timedOut = true;
+        return null;
+      },
+    );
+    if (timedOut) {
+      _showAdDebugToast('AdMob rewarded one-shot timeout');
+    }
+    return ad;
+  }
+
+  Future<bool> _showUnityRewardedAdFallback() async {
+    if (!_unityRewardedFallbackConfigured) {
+      _showAdDebugToast('Unity rewarded fallback not configured');
+      return false;
+    }
+    _showAdDebugToast('Unity rewarded fallback start');
+    final initialized = await _ensureUnityAdsInitialized();
+    if (!initialized) {
+      _showAdDebugToast('Unity rewarded init failed');
+      return false;
+    }
+
+    final loadCompleter = Completer<bool>();
+    try {
+      await UnityAds.load(
+        placementId: _unityRewardedPlacementIdAndroid,
+        onComplete: (_) {
+          _showAdDebugToast('Unity rewarded loaded');
+          if (!loadCompleter.isCompleted) {
+            loadCompleter.complete(true);
+          }
+        },
+        onFailed: (placementId, error, message) {
+          _showAdDebugToast('Unity rewarded load failed [$error] $message');
+          if (!loadCompleter.isCompleted) {
+            loadCompleter.complete(false);
+          }
+        },
+      );
+    } catch (_) {
+      _showAdDebugToast('Unity rewarded load exception');
+      if (!loadCompleter.isCompleted) {
+        loadCompleter.complete(false);
+      }
+    }
+
+    var loadTimedOut = false;
+    final loaded = await loadCompleter.future.timeout(
+      const Duration(seconds: 12),
+      onTimeout: () {
+        loadTimedOut = true;
+        return false;
+      },
+    );
+    if (!loaded) {
+      if (loadTimedOut) {
+        _showAdDebugToast('Unity rewarded load timeout');
+      }
+      return false;
+    }
+
+    final showCompleter = Completer<bool>();
+    try {
+      await UnityAds.showVideoAd(
+        placementId: _unityRewardedPlacementIdAndroid,
+        onComplete: (_) {
+          _showAdDebugToast('Unity rewarded completed');
+          if (!showCompleter.isCompleted) {
+            showCompleter.complete(true);
+          }
+        },
+        onSkipped: (_) {
+          _showAdDebugToast('Unity rewarded skipped');
+          if (!showCompleter.isCompleted) {
+            showCompleter.complete(false);
+          }
+        },
+        onFailed: (placementId, error, message) {
+          _showAdDebugToast('Unity rewarded show failed [$error] $message');
+          if (!showCompleter.isCompleted) {
+            showCompleter.complete(false);
+          }
+        },
+      );
+    } catch (_) {
+      _showAdDebugToast('Unity rewarded show exception');
+      if (!showCompleter.isCompleted) {
+        showCompleter.complete(false);
+      }
+    }
+
+    var showTimedOut = false;
+    final shown = await showCompleter.future.timeout(
+      const Duration(seconds: 45),
+      onTimeout: () {
+        showTimedOut = true;
+        return false;
+      },
+    );
+    if (showTimedOut) {
+      _showAdDebugToast('Unity rewarded show timeout');
+    }
+    return shown;
   }
 
   String _generateRewardNonce() {
@@ -8116,14 +9006,39 @@ class _ArticlePageState extends State<ArticlePage> {
     return false;
   }
 
-  Future<bool> _showRewardedAd() async {
+  Future<_RewardAdResult> _showRewardedAd() async {
+    _showAdDebugToast('Reward flow start');
+    if (_forceUnityAdsFallback) {
+      _showAdDebugToast('Force Unity rewarded fallback enabled');
+      final unityRewarded = await _showUnityRewardedAdFallback();
+      if (unityRewarded) {
+        _showAdDebugToast('Reward flow success via Unity');
+        return _RewardAdResult.rewarded;
+      }
+      _showAdDebugToast('Reward flow unavailable (Unity fallback failed)');
+      _showTokenMessage('Ad unavailable. Proceeding without reward.');
+      return _RewardAdResult.unavailable;
+    }
     RewardedAd? ad = _rewardedAd;
     _rewardedAd = null;
+    if (ad == null) {
+      _showAdDebugToast('No preloaded AdMob rewarded. Trying one-shot load.');
+    } else {
+      _showAdDebugToast('Using preloaded AdMob rewarded ad');
+    }
     ad ??= await _loadRewardedAdOnce();
     if (ad == null) {
+      _showAdDebugToast('AdMob rewarded unavailable. Trying Unity fallback.');
+      final unityRewarded = await _showUnityRewardedAdFallback();
+      if (unityRewarded) {
+        _loadRewardedAd();
+        _showAdDebugToast('Reward flow success via Unity fallback');
+        return _RewardAdResult.rewarded;
+      }
       _loadRewardedAd();
+      _showAdDebugToast('Reward flow unavailable (all ad providers failed)');
       _showTokenMessage('Ad unavailable. Proceeding without reward.');
-      return true;
+      return _RewardAdResult.unavailable;
     }
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
     final nonce = _generateRewardNonce();
@@ -8135,12 +9050,19 @@ class _ArticlePageState extends State<ArticlePage> {
     );
     final completer = Completer<bool>();
     var adFailedToShow = false;
+    var adShown = false;
+    var adShowTimedOut = false;
     ad.fullScreenContentCallback = FullScreenContentCallback(
+      onAdShowedFullScreenContent: (ad) {
+        adShown = true;
+        _showAdDebugToast('AdMob rewarded shown');
+      },
       onAdDismissedFullScreenContent: (ad) {
         ad.dispose();
         if (!completer.isCompleted) {
           completer.complete(false);
         }
+        _showAdDebugToast('AdMob rewarded dismissed');
         _loadRewardedAd();
       },
       onAdFailedToShowFullScreenContent: (ad, error) {
@@ -8149,30 +9071,71 @@ class _ArticlePageState extends State<ArticlePage> {
         if (!completer.isCompleted) {
           completer.complete(false);
         }
+        _showAdDebugToast(
+          'AdMob rewarded failed to show [${error.code}] ${error.message}',
+        );
         _loadRewardedAd();
       },
     );
-    ad.show(
-      onUserEarnedReward: (ad, reward) {
-        if (!completer.isCompleted) {
-          completer.complete(true);
-        }
+    try {
+      ad.show(
+        onUserEarnedReward: (ad, reward) {
+          _showAdDebugToast('AdMob rewarded callback received');
+          if (!completer.isCompleted) {
+            completer.complete(true);
+          }
+        },
+      );
+    } catch (error) {
+      _showAdDebugToast('AdMob rewarded show exception: $error');
+      ad.dispose();
+      _loadRewardedAd();
+      final unityRewarded = await _showUnityRewardedAdFallback();
+      if (unityRewarded) {
+        _showAdDebugToast('Reward flow recovered via Unity fallback');
+        return _RewardAdResult.rewarded;
+      }
+      _showTokenMessage('Ad unavailable. Proceeding without reward.');
+      return _RewardAdResult.unavailable;
+    }
+    final rewarded = await completer.future.timeout(
+      const Duration(seconds: 55),
+      onTimeout: () {
+        adShowTimedOut = true;
+        return false;
       },
     );
-    final rewarded = await completer.future;
-    if (!rewarded) {
-      if (adFailedToShow) {
-        _showTokenMessage('Ad unavailable. Proceeding without reward.');
-        return true;
-      }
-      return false;
+    if (adShowTimedOut) {
+      _showAdDebugToast('AdMob rewarded show timeout');
+      ad.dispose();
+      _loadRewardedAd();
     }
+    if (!rewarded) {
+      _showAdDebugToast('AdMob rewarded not earned. Trying Unity fallback.');
+      final unityRewarded = await _showUnityRewardedAdFallback();
+      if (unityRewarded) {
+        _showAdDebugToast('Reward flow success via Unity after AdMob miss');
+        return _RewardAdResult.rewarded;
+      }
+      if (adFailedToShow || !adShown) {
+        _showAdDebugToast(
+          'Reward flow unavailable (AdMob failed/not shown and Unity failed)',
+        );
+        _showTokenMessage('Ad unavailable. Proceeding without reward.');
+        return _RewardAdResult.unavailable;
+      }
+      _showAdDebugToast('Ad shown but not rewarded');
+      return _RewardAdResult.shownNotRewarded;
+    }
+    _showAdDebugToast('Reward earned. Claiming server reward');
     final claimed = await _claimAdReward(nonce);
     if (!claimed) {
+      _showAdDebugToast('Reward verification pending');
       _showTokenMessage('Reward verification pending.');
-      return true;
+      return _RewardAdResult.rewarded;
     }
-    return true;
+    _showAdDebugToast('Reward claim completed');
+    return _RewardAdResult.rewarded;
   }
 
   String _translationCacheKey(
@@ -8230,6 +9193,8 @@ class _ArticlePageState extends State<ArticlePage> {
   }
 
   Future<void> _summarizeContent() async {
+    _showAdDebugToast('Translate button tapped');
+    if (!mounted) return;
     if (_showSummaryContent && _summaryContent.isNotEmpty) {
       setState(() {
         _showSummaryContent = false;
@@ -8247,6 +9212,9 @@ class _ArticlePageState extends State<ArticlePage> {
     if (!hasPaidTabs) {
       final gate = await _loadFreeTranslationGate();
       if (!mounted) return;
+      _showAdDebugToast(
+        'Free translation gate: used=${gate.used}, remaining=${gate.remaining}',
+      );
       if (gate.remaining > 0) {
         final usedAfter = (gate.used + 1).clamp(0, _dailyFreeTranslationLimit);
         final remainingAfter = (_dailyFreeTranslationLimit - usedAfter).clamp(
@@ -8257,16 +9225,19 @@ class _ArticlePageState extends State<ArticlePage> {
           used: usedAfter,
           remaining: remainingAfter,
         );
+        if (!mounted) return;
         await _setFreeTranslationUsed(usedAfter);
         await _refreshAdBadge();
       } else if (gate.shouldShowAd) {
+        _showAdDebugToast('Free quota exhausted. Starting rewarded ad gate.');
         await _showFreeRemainingDialog(used: gate.used, remaining: 0);
-        final rewarded = await _showRewardedAd();
-        if (!rewarded) {
-          return;
-        }
+        if (!mounted) return;
+        final adResult = await _showRewardedAd();
+        _showAdDebugToast('Reward gate result: ${adResult.name}');
       }
     }
+    if (!mounted) return;
+    _showAdDebugToast('Starting translation request');
     setState(() {
       _summarizing = true;
       _summaryNotice = '';
@@ -8285,7 +9256,10 @@ class _ArticlePageState extends State<ArticlePage> {
         length: _summaryLength,
         isFull: isFull,
       );
-      if (cached != null && mounted) {
+      if (cached != null) {
+        if (!mounted) return;
+        _showAdDebugToast('Translation cache hit');
+        if (!mounted) return;
         setState(() {
           _summaryContent = cached.content;
           _summaryNotice = cached.limited
@@ -8309,6 +9283,7 @@ class _ArticlePageState extends State<ArticlePage> {
       );
       final response = await http.get(uri);
       if (response.statusCode == 429) {
+        _showAdDebugToast('Translation API rate limited (429)');
         int retryAfter = 5;
         final header = response.headers['retry-after'];
         if (header != null) {
@@ -8329,6 +9304,7 @@ class _ArticlePageState extends State<ArticlePage> {
         return;
       }
       if (response.statusCode == 200) {
+        _showAdDebugToast('Translation API success (200)');
         final payload = jsonDecode(response.body) as Map<String, dynamic>;
         final error = (payload['error'] ?? '').toString();
         if (error.isNotEmpty && mounted) {
@@ -8336,6 +9312,7 @@ class _ArticlePageState extends State<ArticlePage> {
             context,
           ).showSnackBar(SnackBar(content: Text(error)));
         }
+        if (!mounted) return;
         setState(() {
           _summaryContent = (payload['translatedContent'] ?? '').toString();
           final limited = payload['limited'] == true;
@@ -8364,7 +9341,13 @@ class _ArticlePageState extends State<ArticlePage> {
           limited: payload['limited'] == true,
           link: (payload['link'] ?? '').toString(),
         );
+      } else {
+        _showAdDebugToast('Translation API failed (${response.statusCode})');
+        _showTokenMessage('Translation failed. Please try again.');
       }
+    } catch (error) {
+      _showAdDebugToast('Translation exception: $error');
+      _showTokenMessage('Translation failed. Please try again.');
     } finally {
       if (mounted) {
         setState(() {
@@ -9421,13 +10404,15 @@ class _TokenPackTile extends StatelessWidget {
   });
 
   final int tokens;
-  final ProductDetails product;
+  final _StoreProduct product;
   final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final locale = Localizations.localeOf(context).toString();
+    final displayPrice = _formatStorePrice(product.price, locale);
     final isDark = theme.brightness == Brightness.dark;
     return InkWell(
       borderRadius: BorderRadius.circular(16),
@@ -9458,7 +10443,7 @@ class _TokenPackTile extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              product.price,
+              displayPrice,
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
@@ -9469,6 +10454,7 @@ class _TokenPackTile extends StatelessWidget {
                 _formatCurrency(
                   product.rawPrice / tokens,
                   product.currencyCode,
+                  locale: locale,
                 ),
               ),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -9481,14 +10467,35 @@ class _TokenPackTile extends StatelessWidget {
     );
   }
 
-  String _formatCurrency(double value, String currencyCode) {
+  String _formatStorePrice(String value, String locale) {
+    final raw = value.trim();
+    if (raw.isEmpty) return raw;
+    if (!RegExp(r'^\d+(?:\.\d+)?$').hasMatch(raw)) return raw;
+    if (raw.contains(',')) return raw;
+    final parsed = num.tryParse(raw);
+    if (parsed == null) return raw;
+    return _formatNumber(parsed.toDouble(), locale);
+  }
+
+  String _formatCurrency(double value, String currencyCode, {String? locale}) {
     if (currencyCode.isEmpty) {
       return value.toStringAsFixed(2);
     }
     try {
-      return NumberFormat.simpleCurrency(name: currencyCode).format(value);
+      return NumberFormat.simpleCurrency(
+        locale: locale,
+        name: currencyCode,
+      ).format(value);
     } catch (_) {
       return value.toStringAsFixed(2);
     }
+  }
+
+  String _formatNumber(double value, String locale) {
+    final format = NumberFormat.decimalPattern(locale.isEmpty ? null : locale);
+    if (value == value.roundToDouble()) {
+      return format.format(value.toInt());
+    }
+    return format.format(value);
   }
 }

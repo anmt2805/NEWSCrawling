@@ -46,6 +46,18 @@ android {
         resourceConfigurations.addAll(listOf("en", "ko", "ja", "fr", "es", "ru", "ar"))
     }
 
+    flavorDimensions += "store"
+    productFlavors {
+        create("play") {
+            dimension = "store"
+            resValue("string", "store_flavor", "play")
+        }
+        create("onestore") {
+            dimension = "store"
+            resValue("string", "store_flavor", "onestore")
+        }
+    }
+
     signingConfigs {
         create("release") {
             val keyAliasValue = keystoreProperties["keyAlias"] as? String
@@ -82,6 +94,4 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
-    implementation("com.google.ads.mediation:unity:4.12.2.0")
-    implementation("com.unity3d.ads:unity-ads:4.12.2")
 }

@@ -223,6 +223,7 @@
   },
   "language": "언어",
   "retry": "다시 시도",
+  "purchaseFailedCheckPayment": "결제에 실패했습니다. 결제 가능 여부 및 결제 수단 확인 후 다시 결제해주세요.",
   "settingsTitle": "설정",
   "settingsAppearanceTitle": "모양",
   "contactSupport": "문의하기",

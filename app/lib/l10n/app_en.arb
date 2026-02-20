@@ -223,6 +223,7 @@
   },
   "language": "Language",
   "retry": "Retry",
+  "purchaseFailedCheckPayment": "Purchase failed. Please check purchase availability and payment method, then try again.",
   "settingsTitle": "Settings",
   "settingsAppearanceTitle": "Appearance",
   "contactSupport": "Contact support",
