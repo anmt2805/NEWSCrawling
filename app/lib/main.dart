@@ -7443,7 +7443,6 @@ class _NewsListState extends State<NewsList> {
   bool _isSoftRefresh = false;
   bool _pullRefreshInProgress = false;
   static const int _bannerInterval = 6;
-  static const Duration _adRetryCooldown = Duration(hours: 1);
   static const int _processingEtaStartMinutes = 7;
   static const Duration _processingEtaTick = Duration(minutes: 1);
   static const Duration _processingEtaRetention = Duration(minutes: 30);
@@ -7461,6 +7460,11 @@ class _NewsListState extends State<NewsList> {
   }
 
   bool get _showAdDebugToastEnabled => kDebugMode || _adsDebugToast;
+
+  Duration _adRetryDelayForFailure(int failureStreak) {
+    final minutes = (1 + (failureStreak - 1) * 2).clamp(1, 5);
+    return Duration(minutes: minutes);
+  }
 
   void _showAdDebugToast(String message) {
     debugPrint('[AD DEBUG][Feed] $message');
@@ -7914,13 +7918,15 @@ class _NewsListState extends State<NewsList> {
           onAdFailedToLoad: (ad, error) {
             ad.dispose();
             if (!mounted) return;
+            final nextFailure = _bannerFailureStreak + 1;
+            final retryDelay = _adRetryDelayForFailure(nextFailure);
             setState(() {
-              _bannerFailureStreak += 1;
-              _bannerRetryAfter = DateTime.now().add(_adRetryCooldown);
+              _bannerFailureStreak = nextFailure;
+              _bannerRetryAfter = DateTime.now().add(retryDelay);
               _bannerSlots.remove(slot);
             });
             _showAdDebugToast(
-              'AdMob banner failed [${error.code}] ${error.message}. retry in ${_adRetryCooldown.inMinutes}m',
+              'AdMob banner failed [${error.code}] ${error.message}. retry in ${retryDelay.inMinutes}m',
             );
           },
         ),
@@ -8000,15 +8006,14 @@ class _NewsListState extends State<NewsList> {
                 onFailed: (placementId, error, message) {
                   if (!mounted) return;
                   final nextFailure = _unityBannerFailureStreak + 1;
+                  final retryDelay = _adRetryDelayForFailure(nextFailure);
                   setState(() {
                     _unityBannerLoaded = false;
                     _unityBannerFailureStreak = nextFailure;
-                    _unityBannerRetryAfter = DateTime.now().add(
-                      _adRetryCooldown,
-                    );
+                    _unityBannerRetryAfter = DateTime.now().add(retryDelay);
                   });
                   _showAdDebugToast(
-                    'Unity banner failed [$error] $message. retry in ${_adRetryCooldown.inMinutes}m',
+                    'Unity banner failed [$error] $message. retry in ${retryDelay.inMinutes}m',
                   );
                 },
               ),
