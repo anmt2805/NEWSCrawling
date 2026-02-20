@@ -63,6 +63,10 @@ const maintenanceStoreIos = document.getElementById("maintenanceStoreIos");
 const saveMaintenanceBtn = document.getElementById("saveMaintenanceBtn");
 const maintenanceMessage = document.getElementById("maintenanceMessage");
 const maintenanceEffective = document.getElementById("maintenanceEffective");
+const adsProviderSelect = document.getElementById("adsProvider");
+const saveAdsBtn = document.getElementById("saveAdsBtn");
+const adsMessage = document.getElementById("adsMessage");
+const adsEffective = document.getElementById("adsEffective");
 const pushForm = document.getElementById("pushForm");
 const pushScope = document.getElementById("pushScope");
 const pushUidRow = document.getElementById("pushUidRow");
@@ -112,6 +116,7 @@ const translations = {
     navNegative: "Negative balances",
     navCrawl: "Crawl",
     navMaintenance: "Maintenance",
+    navAds: "Ads",
     navSources: "Sources",
     navKeywords: "Keywords",
     navTabs: "Tabs",
@@ -209,6 +214,16 @@ const translations = {
     maintenanceSaved: "Saved.",
     maintenanceSaveFailed: "Save failed: {error}",
     maintenanceEffective: "Active: {status}",
+    adsTitle: "Ads",
+    adsHint: "Choose which ad provider the app should prioritize.",
+    adsProviderLabel: "Ad Provider",
+    adsModeAuto: "Auto (AdMob -> Unity fallback)",
+    adsModeAdmob: "AdMob only",
+    adsModeUnity: "Unity only",
+    adsSave: "Save",
+    adsSaved: "Saved.",
+    adsSaveFailed: "Save failed: {error}",
+    adsEffective: "Current mode: {mode}",
     pushTitle: "Push Notifications",
     pushHint:
       "Send a manual push to all users (with active tokens) or one specific user.",
@@ -246,6 +261,7 @@ const translations = {
     navNegative: "음수 잔액",
     navCrawl: "크롤링",
     navMaintenance: "점검",
+    navAds: "광고",
     navSources: "소스",
     navKeywords: "키워드",
     navTabs: "탭",
@@ -343,6 +359,16 @@ const translations = {
     maintenanceSaved: "저장했습니다.",
     maintenanceSaveFailed: "저장 실패: {error}",
     maintenanceEffective: "현재 상태: {status}",
+    adsTitle: "광고",
+    adsHint: "앱에서 우선 사용할 광고 공급자를 선택합니다.",
+    adsProviderLabel: "광고 공급자",
+    adsModeAuto: "자동 (애드몹 실패 시 유니티)",
+    adsModeAdmob: "애드몹만 사용",
+    adsModeUnity: "유니티만 사용",
+    adsSave: "저장",
+    adsSaved: "저장했습니다.",
+    adsSaveFailed: "저장 실패: {error}",
+    adsEffective: "현재 모드: {mode}",
     pushTitle: "푸시 알림 발송",
     pushHint:
       "활성 토큰이 있는 전체 사용자 또는 특정 사용자에게 수동 푸시를 보냅니다.",
@@ -695,6 +721,33 @@ function renderMaintenance(payload) {
   });
 }
 
+function normalizeAdsProvider(value) {
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase();
+  if (normalized === "admob" || normalized === "unity") {
+    return normalized;
+  }
+  return "auto";
+}
+
+function adsProviderLabel(provider) {
+  const normalized = normalizeAdsProvider(provider);
+  if (normalized === "admob") return t("adsModeAdmob");
+  if (normalized === "unity") return t("adsModeUnity");
+  return t("adsModeAuto");
+}
+
+function renderAds(payload) {
+  if (!payload) return;
+  const config = payload.config || payload.ads || {};
+  const provider = normalizeAdsProvider(config.provider);
+  adsProviderSelect.value = provider;
+  adsEffective.textContent = t("adsEffective", {
+    mode: adsProviderLabel(provider)
+  });
+}
+
 function updatePushTargetUi() {
   const isUser = pushScope.value === "user";
   pushUidRow.hidden = !isUser;
@@ -729,14 +782,16 @@ async function loadAll() {
       metrics,
       negativeUsers,
       crawlSources,
-      maintenance
+      maintenance,
+      ads
     ] = await Promise.all([
       apiGet("/admin/sources?limit=200"),
       apiGet("/admin/keywords?limit=100"),
       apiGet("/admin/metrics"),
       apiGet("/admin/users/negative?limit=200"),
       apiGet("/admin/crawl-sources"),
-      apiGet("/admin/maintenance")
+      apiGet("/admin/maintenance"),
+      apiGet("/admin/ads")
     ]);
     renderSources(reportedSources.items || []);
     renderKeywords(keywords.items || []);
@@ -744,6 +799,7 @@ async function loadAll() {
     renderNegativeUsers(negativeUsers.items || []);
     renderCrawlSources(crawlSources);
     renderMaintenance(maintenance);
+    renderAds(ads);
     setStatus(t("ready"));
   } catch (error) {
     if (isAuthError(error)) return;
@@ -827,6 +883,25 @@ saveMaintenanceBtn.addEventListener("click", async () => {
     });
   } finally {
     saveMaintenanceBtn.disabled = false;
+  }
+});
+
+saveAdsBtn.addEventListener("click", async () => {
+  adsMessage.textContent = "";
+  saveAdsBtn.disabled = true;
+  try {
+    const payload = await apiPost("/admin/ads", {
+      provider: normalizeAdsProvider(adsProviderSelect.value)
+    });
+    renderAds(payload);
+    adsMessage.textContent = t("adsSaved");
+  } catch (error) {
+    if (isAuthError(error)) return;
+    adsMessage.textContent = t("adsSaveFailed", {
+      error: error.message
+    });
+  } finally {
+    saveAdsBtn.disabled = false;
   }
 });
 

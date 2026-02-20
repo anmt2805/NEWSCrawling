@@ -382,12 +382,21 @@ const DEFAULT_MAINTENANCE = {
   storeUrlAndroid: "",
   storeUrlIos: ""
 };
+const ADS_CONFIG_DOC_ID = "ads";
+const ADS_CONFIG_CACHE_TTL_MS = 15 * 1000;
+const DEFAULT_ADS_CONFIG = {
+  provider: "auto"
+};
 let crawlSourcesCache = {
   value: DEFAULT_CRAWL_SOURCES,
   fetchedAt: 0
 };
 let maintenanceCache = {
   value: DEFAULT_MAINTENANCE,
+  fetchedAt: 0
+};
+let adsConfigCache = {
+  value: DEFAULT_ADS_CONFIG,
   fetchedAt: 0
 };
 
@@ -462,9 +471,12 @@ app.get("/time", (req, res) => {
 app.get("/app/status", async (req, res) => {
   try {
     const nowMs = Date.now();
-    const config = await getMaintenanceConfig();
+    const [config, ads] = await Promise.all([
+      getMaintenanceConfig(),
+      getAdsConfig()
+    ]);
     const maintenance = computeMaintenanceStatus(config, nowMs);
-    return res.json({ ok: true, serverTimeMs: nowMs, maintenance });
+    return res.json({ ok: true, serverTimeMs: nowMs, maintenance, ads });
   } catch (error) {
     console.error("[AppStatus] failed", error?.message || error);
     return res
@@ -2093,6 +2105,47 @@ app.post("/admin/maintenance", async (req, res) => {
   }
 });
 
+app.get("/admin/ads", async (req, res) => {
+  const user = await requireAdmin(req, res);
+  if (!user) return;
+  try {
+    const config = await getAdsConfig({ forceRefresh: true });
+    return res.json({ ok: true, config, serverTimeMs: Date.now() });
+  } catch (error) {
+    console.error("[Admin] ads read failed", error?.message || error);
+    return res.status(500).json({ ok: false, error: "admin_ads_failed" });
+  }
+});
+
+app.post("/admin/ads", async (req, res) => {
+  const user = await requireAdmin(req, res);
+  if (!user) return;
+  try {
+    const payload = normalizeAdsConfig(req.body || {});
+    const db = getFirestore();
+    if (!db) {
+      return res.status(503).json({ ok: false, error: "firestore_unavailable" });
+    }
+    await db
+      .collection(CRAWL_SOURCES_COLLECTION)
+      .doc(ADS_CONFIG_DOC_ID)
+      .set(
+        {
+          ...payload,
+          updatedAt: new Date().toISOString(),
+          updatedBy: user.uid || "",
+          updatedByEmail: user.email || ""
+        },
+        { merge: true }
+      );
+    adsConfigCache = { value: payload, fetchedAt: Date.now() };
+    return res.json({ ok: true, config: payload, serverTimeMs: Date.now() });
+  } catch (error) {
+    console.error("[Admin] ads update failed", error?.message || error);
+    return res.status(500).json({ ok: false, error: "admin_ads_failed" });
+  }
+});
+
 app.get("/admin/keywords", async (req, res) => {
   const user = await requireAdmin(req, res);
   if (!user) return;
@@ -2934,6 +2987,23 @@ function normalizeMaintenanceConfig(input) {
   };
 }
 
+function normalizeAdsProvider(value) {
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase();
+  if (normalized === "admob" || normalized === "unity") {
+    return normalized;
+  }
+  return "auto";
+}
+
+function normalizeAdsConfig(input) {
+  const value = input && typeof input === "object" ? input : {};
+  return {
+    provider: normalizeAdsProvider(value.provider)
+  };
+}
+
 function parseIsoMs(value) {
   if (!value || typeof value !== "string") return null;
   const ms = Date.parse(value);
@@ -2983,6 +3053,37 @@ async function getMaintenanceConfig(options = {}) {
     console.error("[Maintenance] load failed", error?.message || error);
     const fallback = maintenanceCache.value || DEFAULT_MAINTENANCE;
     return normalizeMaintenanceConfig(fallback);
+  }
+}
+
+async function getAdsConfig(options = {}) {
+  const forceRefresh = options.forceRefresh === true;
+  const now = Date.now();
+  if (
+    !forceRefresh &&
+    adsConfigCache.value &&
+    now - adsConfigCache.fetchedAt < ADS_CONFIG_CACHE_TTL_MS
+  ) {
+    return adsConfigCache.value;
+  }
+  const db = getFirestore();
+  if (!db) {
+    const fallback = adsConfigCache.value || DEFAULT_ADS_CONFIG;
+    return normalizeAdsConfig(fallback);
+  }
+  try {
+    const snap = await db
+      .collection(CRAWL_SOURCES_COLLECTION)
+      .doc(ADS_CONFIG_DOC_ID)
+      .get();
+    const data = snap.exists ? snap.data() || {} : {};
+    const normalized = normalizeAdsConfig(data);
+    adsConfigCache = { value: normalized, fetchedAt: now };
+    return normalized;
+  } catch (error) {
+    console.error("[AdsConfig] load failed", error?.message || error);
+    const fallback = adsConfigCache.value || DEFAULT_ADS_CONFIG;
+    return normalizeAdsConfig(fallback);
   }
 }
 

@@ -85,6 +85,7 @@
           <a class="nav-pill" href="#section-negative" data-i18n="navNegative">Negative</a>
           <a class="nav-pill" href="#section-crawl" data-i18n="navCrawl">Crawl</a>
           <a class="nav-pill" href="#section-maintenance" data-i18n="navMaintenance">Maintenance</a>
+          <a class="nav-pill" href="#section-ads" data-i18n="navAds">Ads</a>
           <a class="nav-pill" href="#section-sources" data-i18n="navSources">Sources</a>
           <a class="nav-pill" href="#section-keywords" data-i18n="navKeywords">Keywords</a>
           <a class="nav-pill" href="#section-tabs" data-i18n="navTabs">Tabs</a>
@@ -281,6 +282,32 @@
             <p id="maintenanceMessage" class="message"></p>
           </div>
           <p id="maintenanceEffective" class="hint"></p>
+        </section>
+
+        <section id="section-ads" class="card">
+          <h2 data-i18n="adsTitle">Ads</h2>
+          <p class="hint" data-i18n="adsHint">
+            Choose which ad provider the app should prioritize.
+          </p>
+          <form class="form-grid">
+            <label>
+              <span data-i18n="adsProviderLabel">Ad Provider</span>
+              <select id="adsProvider">
+                <option value="auto" data-i18n="adsModeAuto">
+                  Auto (AdMob -> Unity fallback)
+                </option>
+                <option value="admob" data-i18n="adsModeAdmob">AdMob only</option>
+                <option value="unity" data-i18n="adsModeUnity">Unity only</option>
+              </select>
+            </label>
+          </form>
+          <div class="form-grid">
+            <button id="saveAdsBtn" class="btn" type="button" data-i18n="adsSave">
+              Save
+            </button>
+            <p id="adsMessage" class="message"></p>
+          </div>
+          <p id="adsEffective" class="hint"></p>
         </section>
 
         <section id="section-sources" class="card">

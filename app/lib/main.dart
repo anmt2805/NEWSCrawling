@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
+import 'dart:collection';
 import 'dart:ui';
 import 'dart:math';
 
@@ -65,6 +66,39 @@ const bool _adsDebugToast = bool.fromEnvironment(
 const String _accountDeletionUrl = 'https://forms.gle/USYUJGbfAmnwfQZZA';
 const String _googleWebClientId =
     '442218050266-7t8egh8fpn4jvq1vhqs1kn8bdlhmocro.apps.googleusercontent.com';
+
+enum _AdProviderMode { auto, admob, unity }
+
+_AdProviderMode _adProviderModeFromRaw(String? raw) {
+  switch ((raw ?? '').trim().toLowerCase()) {
+    case 'admob':
+      return _AdProviderMode.admob;
+    case 'unity':
+      return _AdProviderMode.unity;
+    default:
+      return _AdProviderMode.auto;
+  }
+}
+
+String _adProviderModeName(_AdProviderMode mode) {
+  switch (mode) {
+    case _AdProviderMode.admob:
+      return 'admob';
+    case _AdProviderMode.unity:
+      return 'unity';
+    case _AdProviderMode.auto:
+      return 'auto';
+  }
+}
+
+final ValueNotifier<_AdProviderMode> _adProviderModeNotifier =
+    ValueNotifier<_AdProviderMode>(_AdProviderMode.auto);
+
+void _setRuntimeAdProviderMode(_AdProviderMode mode) {
+  if (_adProviderModeNotifier.value == mode) return;
+  _adProviderModeNotifier.value = mode;
+  debugPrint('[AD DEBUG] runtime ad provider: ${_adProviderModeName(mode)}');
+}
 
 const Duration _reviewPromptCooldown = Duration(days: 30);
 const int _reviewPromptLaunchThreshold = 100;
@@ -1446,6 +1480,11 @@ class _NewsCrawlAppState extends State<NewsCrawlApp>
             ? Map<String, dynamic>.from(maintenanceRaw)
             : null,
       );
+      final adsRaw = decoded['ads'];
+      final adProviderMode = _adProviderModeFromRaw(
+        adsRaw is Map ? adsRaw['provider']?.toString() : null,
+      );
+      _setRuntimeAdProviderMode(adProviderMode);
       if (!mounted) return;
       setState(() {
         _maintenanceStatus = maintenance;
@@ -7428,15 +7467,77 @@ class _BannerSlot {
   }
 }
 
+class _KeepAliveSlot extends StatefulWidget {
+  const _KeepAliveSlot({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  State<_KeepAliveSlot> createState() => _KeepAliveSlotState();
+}
+
+class _KeepAliveSlotState extends State<_KeepAliveSlot>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
+  }
+}
+
+class _UnityBannerSlotState {
+  bool loaded = false;
+  int failureStreak = 0;
+  DateTime? retryAfter;
+  Timer? retryTimer;
+
+  void dispose() {
+    retryTimer?.cancel();
+  }
+}
+
+class _FeedAdStateCache {
+  _FeedAdStateCache({required this.key});
+
+  final String key;
+  final List<_BannerSlot> bannerSlots = [];
+  final Map<int, _UnityBannerSlotState> unityBannerSlots = {};
+  int bannerFailureStreak = 0;
+  DateTime? bannerRetryAfter;
+  DateTime lastUsedAt = DateTime.now();
+
+  void touch() {
+    lastUsedAt = DateTime.now();
+  }
+
+  void dispose() {
+    for (final slot in bannerSlots) {
+      slot.dispose();
+    }
+    bannerSlots.clear();
+    for (final slot in unityBannerSlots.values) {
+      slot.dispose();
+    }
+    unityBannerSlots.clear();
+  }
+}
+
 class _NewsListState extends State<NewsList> {
   late Future<List<NewsItem>> _future;
   List<NewsItem> _cachedItems = [];
   static final Map<String, List<NewsItem>> _newsCache = {};
   static final Map<String, int> _processingSinceStore = {};
+  static final LinkedHashMap<String, _FeedAdStateCache> _feedAdCache =
+      LinkedHashMap<String, _FeedAdStateCache>();
+  static const int _maxFeedAdCacheEntries = 12;
   int _fetchSequence = 0;
   int _refreshSeed = 0;
   int _rateLimitedUntilMs = 0;
   late final ScrollController _scrollController;
+  late _FeedAdStateCache _adState;
   int _currentLimit = 0;
   bool _isLoadingMore = false;
   bool _hasMore = true;
@@ -7446,12 +7547,7 @@ class _NewsListState extends State<NewsList> {
   static const int _processingEtaStartMinutes = 7;
   static const Duration _processingEtaTick = Duration(minutes: 1);
   static const Duration _processingEtaRetention = Duration(minutes: 30);
-  final List<_BannerSlot> _bannerSlots = [];
-  int _bannerFailureStreak = 0;
-  DateTime? _bannerRetryAfter;
-  bool _unityBannerLoaded = false;
-  int _unityBannerFailureStreak = 0;
-  DateTime? _unityBannerRetryAfter;
+  Timer? _bannerRetryTimer;
   final Map<String, int> _processingSinceMs = {};
   Timer? _processingEtaTimer;
 
@@ -7459,11 +7555,127 @@ class _NewsListState extends State<NewsList> {
     return '${widget.keyword}::${widget.region}::${widget.language ?? 'en'}::${widget.feedLanguage}::$_currentLimit';
   }
 
+  String get _adStateKey {
+    return _buildAdStateKey(
+      keyword: widget.keyword,
+      region: widget.region,
+      language: widget.language,
+      feedLanguage: widget.feedLanguage,
+    );
+  }
+
+  List<_BannerSlot> get _bannerSlots => _adState.bannerSlots;
+  Map<int, _UnityBannerSlotState> get _unityBannerSlots =>
+      _adState.unityBannerSlots;
+  int get _bannerFailureStreak => _adState.bannerFailureStreak;
+  set _bannerFailureStreak(int value) {
+    _adState.bannerFailureStreak = value;
+    _adState.touch();
+  }
+
+  DateTime? get _bannerRetryAfter => _adState.bannerRetryAfter;
+  set _bannerRetryAfter(DateTime? value) {
+    _adState.bannerRetryAfter = value;
+    _adState.touch();
+  }
+
   bool get _showAdDebugToastEnabled => kDebugMode || _adsDebugToast;
+
+  bool get _preferUnityAds {
+    return _forceUnityAdsFallback ||
+        _adProviderModeNotifier.value == _AdProviderMode.unity;
+  }
+
+  bool get _admobOnlyMode {
+    return !_forceUnityAdsFallback &&
+        _adProviderModeNotifier.value == _AdProviderMode.admob;
+  }
+
+  bool get _allowUnityFallback => !_admobOnlyMode;
 
   Duration _adRetryDelayForFailure(int failureStreak) {
     final minutes = (1 + (failureStreak - 1) * 2).clamp(1, 5);
     return Duration(minutes: minutes);
+  }
+
+  static String _buildAdStateKey({
+    required String keyword,
+    required String region,
+    required String? language,
+    required String feedLanguage,
+  }) {
+    return '$keyword::$region::${language ?? 'en'}::$feedLanguage';
+  }
+
+  _FeedAdStateCache _obtainFeedAdState(String key) {
+    final existing = _feedAdCache.remove(key);
+    if (existing != null) {
+      existing.touch();
+      _feedAdCache[key] = existing;
+      return existing;
+    }
+    final created = _FeedAdStateCache(key: key);
+    _feedAdCache[key] = created;
+    while (_feedAdCache.length > _maxFeedAdCacheEntries) {
+      final oldestKey = _feedAdCache.keys.first;
+      final evicted = _feedAdCache.remove(oldestKey);
+      evicted?.dispose();
+    }
+    return created;
+  }
+
+  void _cancelUnityBannerRetryTimers() {
+    for (final slot in _unityBannerSlots.values) {
+      slot.retryTimer?.cancel();
+      slot.retryTimer = null;
+    }
+  }
+
+  void _scheduleBannerRetryWakeup(DateTime? retryAfter) {
+    _bannerRetryTimer?.cancel();
+    if (retryAfter == null) return;
+    final delay = retryAfter.difference(DateTime.now());
+    if (delay <= Duration.zero) return;
+    _bannerRetryTimer = Timer(delay, () {
+      if (!mounted) return;
+      setState(() {});
+    });
+  }
+
+  void _scheduleUnityBannerRetryWakeup(
+    int slotIndex,
+    DateTime? retryAfter,
+  ) {
+    final slot = _unityBannerSlots[slotIndex];
+    if (slot == null) return;
+    slot.retryTimer?.cancel();
+    if (retryAfter == null) return;
+    final delay = retryAfter.difference(DateTime.now());
+    if (delay <= Duration.zero) return;
+    slot.retryTimer = Timer(delay, () {
+      if (!mounted) return;
+      setState(() {});
+    });
+  }
+
+  void _disposeUnityBannerSlots() {
+    for (final slot in _unityBannerSlots.values) {
+      slot.dispose();
+    }
+    _unityBannerSlots.clear();
+  }
+
+  void _ensureUnityBannerSlots(int count) {
+    final validKeys = <int>{for (var i = 0; i < count; i++) i};
+    final removeKeys = _unityBannerSlots.keys
+        .where((key) => !validKeys.contains(key))
+        .toList();
+    for (final key in removeKeys) {
+      _unityBannerSlots.remove(key)?.dispose();
+    }
+    for (var i = 0; i < count; i++) {
+      _unityBannerSlots.putIfAbsent(i, () => _UnityBannerSlotState());
+    }
   }
 
   void _showAdDebugToast(String message) {
@@ -7480,6 +7692,11 @@ class _NewsListState extends State<NewsList> {
         ),
       );
     });
+  }
+
+  void _onAdProviderModeChanged() {
+    if (!mounted) return;
+    setState(() {});
   }
 
   void _syncProcessingEtaTracking(List<NewsItem> items) {
@@ -7570,9 +7787,14 @@ class _NewsListState extends State<NewsList> {
   void initState() {
     super.initState();
     _currentLimit = widget.limit;
+    _adState = _obtainFeedAdState(_adStateKey);
+    _adProviderModeNotifier.addListener(_onAdProviderModeChanged);
     _scrollController = ScrollController()..addListener(_handleScroll);
     if (_unityBannerFallbackConfigured) {
       unawaited(_ensureUnityAdsInitialized());
+    }
+    if (_bannerRetryAfter != null) {
+      _scheduleBannerRetryWakeup(_bannerRetryAfter);
     }
     _cachedItems = _newsCache[_cacheKey] ?? [];
     _syncProcessingEtaTracking(_cachedItems);
@@ -7581,11 +7803,11 @@ class _NewsListState extends State<NewsList> {
 
   @override
   void dispose() {
+    _adProviderModeNotifier.removeListener(_onAdProviderModeChanged);
     _scrollController.removeListener(_handleScroll);
     _scrollController.dispose();
-    for (final slot in _bannerSlots) {
-      slot.dispose();
-    }
+    _cancelUnityBannerRetryTimers();
+    _bannerRetryTimer?.cancel();
     _processingEtaTimer?.cancel();
     super.dispose();
   }
@@ -7593,9 +7815,25 @@ class _NewsListState extends State<NewsList> {
   @override
   void didUpdateWidget(covariant NewsList oldWidget) {
     super.didUpdateWidget(oldWidget);
+    final oldAdStateKey = _buildAdStateKey(
+      keyword: oldWidget.keyword,
+      region: oldWidget.region,
+      language: oldWidget.language,
+      feedLanguage: oldWidget.feedLanguage,
+    );
+    final newAdStateKey = _adStateKey;
+    if (oldAdStateKey != newAdStateKey) {
+      _cancelUnityBannerRetryTimers();
+      _bannerRetryTimer?.cancel();
+      _adState = _obtainFeedAdState(newAdStateKey);
+      if (_bannerRetryAfter != null) {
+        _scheduleBannerRetryWakeup(_bannerRetryAfter);
+      }
+    }
     if (oldWidget.keyword != widget.keyword ||
         oldWidget.region != widget.region ||
         oldWidget.language != widget.language ||
+        oldWidget.feedLanguage != widget.feedLanguage ||
         oldWidget.limit != widget.limit) {
       _isSoftRefresh = false;
       _currentLimit = widget.limit;
@@ -7877,7 +8115,7 @@ class _NewsListState extends State<NewsList> {
   }
 
   void _ensureBannerSlots(int count) {
-    if (_forceUnityAdsFallback) {
+    if (_preferUnityAds) {
       if (_bannerSlots.isNotEmpty) {
         for (final slot in _bannerSlots) {
           slot.dispose();
@@ -7913,6 +8151,7 @@ class _NewsListState extends State<NewsList> {
               _bannerRetryAfter = null;
               slot.loaded = true;
             });
+            _bannerRetryTimer?.cancel();
             _showAdDebugToast('AdMob banner loaded');
           },
           onAdFailedToLoad: (ad, error) {
@@ -7925,6 +8164,7 @@ class _NewsListState extends State<NewsList> {
               _bannerRetryAfter = DateTime.now().add(retryDelay);
               _bannerSlots.remove(slot);
             });
+            _scheduleBannerRetryWakeup(_bannerRetryAfter);
             _showAdDebugToast(
               'AdMob banner failed [${error.code}] ${error.message}. retry in ${retryDelay.inMinutes}m',
             );
@@ -7937,14 +8177,19 @@ class _NewsListState extends State<NewsList> {
     }
   }
 
-  Widget _buildUnityBannerFallback(BuildContext context) {
+  Widget _buildUnityBannerFallback(BuildContext context, int slotIndex) {
     if (!_unityBannerFallbackConfigured) {
       return const SizedBox.shrink();
     }
+    final slot = _unityBannerSlots.putIfAbsent(
+      slotIndex,
+      () => _UnityBannerSlotState(),
+    );
     final now = DateTime.now();
-    if (_unityBannerRetryAfter != null &&
-        now.isBefore(_unityBannerRetryAfter!)) {
-      return const SizedBox.shrink();
+    final isRetryCoolingDown =
+        slot.retryAfter != null && now.isBefore(slot.retryAfter!);
+    if (isRetryCoolingDown) {
+      _scheduleUnityBannerRetryWakeup(slotIndex, slot.retryAfter);
     }
     if (!_unityAdsInitialized) {
       unawaited(
@@ -7988,36 +8233,45 @@ class _NewsListState extends State<NewsList> {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              UnityBannerAd(
-                placementId: _unityBannerPlacementIdAndroid,
-                size: BannerSize.standard,
-                onLoad: (_) {
-                  if (!mounted) return;
-                  final shouldNotify = !_unityBannerLoaded;
-                  setState(() {
-                    _unityBannerLoaded = true;
-                    _unityBannerFailureStreak = 0;
-                    _unityBannerRetryAfter = null;
-                  });
-                  if (shouldNotify) {
-                    _showAdDebugToast('Unity banner loaded');
-                  }
-                },
-                onFailed: (placementId, error, message) {
-                  if (!mounted) return;
-                  final nextFailure = _unityBannerFailureStreak + 1;
-                  final retryDelay = _adRetryDelayForFailure(nextFailure);
-                  setState(() {
-                    _unityBannerLoaded = false;
-                    _unityBannerFailureStreak = nextFailure;
-                    _unityBannerRetryAfter = DateTime.now().add(retryDelay);
-                  });
-                  _showAdDebugToast(
-                    'Unity banner failed [$error] $message. retry in ${retryDelay.inMinutes}m',
-                  );
-                },
-              ),
-              if (!_unityBannerLoaded)
+              if (!isRetryCoolingDown)
+                UnityBannerAd(
+                  key: ValueKey('unity-banner-$slotIndex'),
+                  placementId: _unityBannerPlacementIdAndroid,
+                  size: BannerSize.standard,
+                  onLoad: (_) {
+                    if (!mounted) return;
+                    final shouldNotify = !slot.loaded;
+                    if (slot.loaded &&
+                        slot.failureStreak == 0 &&
+                        slot.retryAfter == null) {
+                      return;
+                    }
+                    setState(() {
+                      slot.loaded = true;
+                      slot.failureStreak = 0;
+                      slot.retryAfter = null;
+                    });
+                    slot.retryTimer?.cancel();
+                    if (shouldNotify) {
+                      _showAdDebugToast('Unity banner loaded');
+                    }
+                  },
+                  onFailed: (placementId, error, message) {
+                    if (!mounted) return;
+                    final nextFailure = slot.failureStreak + 1;
+                    final retryDelay = _adRetryDelayForFailure(nextFailure);
+                    setState(() {
+                      slot.loaded = false;
+                      slot.failureStreak = nextFailure;
+                      slot.retryAfter = DateTime.now().add(retryDelay);
+                    });
+                    _scheduleUnityBannerRetryWakeup(slotIndex, slot.retryAfter);
+                    _showAdDebugToast(
+                      'Unity banner failed [$error] $message. retry in ${retryDelay.inMinutes}m (slot $slotIndex)',
+                    );
+                  },
+                ),
+              if (!slot.loaded)
                 const SizedBox(
                   width: 18,
                   height: 18,
@@ -8071,6 +8325,7 @@ class _NewsListState extends State<NewsList> {
   }
 
   Widget _buildNewsList(List<NewsItem> items) {
+    _adState.touch();
     final visibleItems = _filterBlocked(items);
     final extra = _isLoadingMore ? 1 : 0;
     final desiredBannerCount = _bannerCountFor(visibleItems.length);
@@ -8081,15 +8336,18 @@ class _NewsListState extends State<NewsList> {
       _bannerSlots.length,
     );
     final hasLoadedAdmobBanner = _bannerSlots.any((slot) => slot.loaded);
-    final now = DateTime.now();
-    final showUnityFallbackBanner =
+    final useUnityFallbackLayout =
         _unityBannerFallbackConfigured &&
-        (_forceUnityAdsFallback ||
+        _allowUnityFallback &&
+        (_preferUnityAds ||
             (_bannerFailureStreak > 0 && !hasLoadedAdmobBanner)) &&
-        visibleItems.isNotEmpty &&
-        (_unityBannerRetryAfter == null ||
-            now.isAfter(_unityBannerRetryAfter!));
-    final bannerCount = showUnityFallbackBanner
+        visibleItems.isNotEmpty;
+    if (useUnityFallbackLayout) {
+      _ensureUnityBannerSlots(desiredBannerCount);
+    } else if (_unityBannerSlots.isNotEmpty) {
+      _disposeUnityBannerSlots();
+    }
+    final bannerCount = useUnityFallbackLayout
         ? desiredBannerCount
         : effectiveAdmobBannerCount;
     final contentCount = visibleItems.length + bannerCount;
@@ -8117,14 +8375,20 @@ class _NewsListState extends State<NewsList> {
         final isLastAdSlot = bannerCount > 0 && index == contentCount - 1;
         final isAdSlot = isRegularAdSlot || isLastAdSlot;
         if (isAdSlot) {
-          if (showUnityFallbackBanner) {
-            return _buildUnityBannerFallback(context);
-          }
           final adSlotIndex = (isLastAdSlot && !isRegularAdSlot)
               ? bannerCount - 1
               : (index + 1) ~/ intervalWithAd - 1;
+          if (useUnityFallbackLayout) {
+            return _KeepAliveSlot(
+              key: ValueKey('unity-feed-slot-$adSlotIndex'),
+              child: _buildUnityBannerFallback(context, adSlotIndex),
+            );
+          }
           if (adSlotIndex >= 0 && adSlotIndex < _bannerSlots.length) {
-            return _buildBannerAd(context, _bannerSlots[adSlotIndex]);
+            return _KeepAliveSlot(
+              key: ValueKey('admob-feed-slot-$adSlotIndex'),
+              child: _buildBannerAd(context, _bannerSlots[adSlotIndex]),
+            );
           }
           return const SizedBox.shrink();
         }
@@ -8604,6 +8868,7 @@ class _ArticlePageState extends State<ArticlePage> {
   @override
   void initState() {
     super.initState();
+    _adProviderModeNotifier.addListener(_onAdProviderModeChanged);
     _isSaved = widget.isSaved;
     _articleUrl = _upgradeToHttps(
       widget.item.resolvedUrl.isNotEmpty
@@ -8640,6 +8905,7 @@ class _ArticlePageState extends State<ArticlePage> {
 
   @override
   void dispose() {
+    _adProviderModeNotifier.removeListener(_onAdProviderModeChanged);
     _rewardedAd?.dispose();
     super.dispose();
   }
@@ -8771,6 +9037,17 @@ class _ArticlePageState extends State<ArticlePage> {
 
   bool get _showAdDebugToastEnabled => kDebugMode || _adsDebugToast;
 
+  bool get _preferUnityRewarded {
+    return _forceUnityAdsFallback ||
+        _adProviderModeNotifier.value == _AdProviderMode.unity;
+  }
+
+  bool get _allowUnityRewardedFallback {
+    return _unityRewardedFallbackConfigured &&
+        (_forceUnityAdsFallback ||
+            _adProviderModeNotifier.value != _AdProviderMode.admob);
+  }
+
   void _showAdDebugToast(String message) {
     debugPrint('[AD DEBUG][Article] $message');
     if (!mounted || !_showAdDebugToastEnabled) return;
@@ -8787,8 +9064,20 @@ class _ArticlePageState extends State<ArticlePage> {
     });
   }
 
+  void _onAdProviderModeChanged() {
+    if (!mounted) return;
+    if (_preferUnityRewarded) {
+      _rewardedAd?.dispose();
+      _rewardedAd = null;
+      _rewardedAdLoading = false;
+    } else {
+      _loadRewardedAd();
+    }
+    setState(() {});
+  }
+
   void _loadRewardedAd() {
-    if (_forceUnityAdsFallback) return;
+    if (_preferUnityRewarded) return;
     if (_rewardedAdLoading || _rewardedAd != null) return;
     _rewardedAdLoading = true;
     _showAdDebugToast('AdMob rewarded load start');
@@ -8846,8 +9135,8 @@ class _ArticlePageState extends State<ArticlePage> {
   }
 
   Future<bool> _showUnityRewardedAdFallback() async {
-    if (!_unityRewardedFallbackConfigured) {
-      _showAdDebugToast('Unity rewarded fallback not configured');
+    if (!_allowUnityRewardedFallback) {
+      _showAdDebugToast('Unity rewarded fallback disabled');
       return false;
     }
     _showAdDebugToast('Unity rewarded fallback start');
@@ -9013,8 +9302,8 @@ class _ArticlePageState extends State<ArticlePage> {
 
   Future<_RewardAdResult> _showRewardedAd() async {
     _showAdDebugToast('Reward flow start');
-    if (_forceUnityAdsFallback) {
-      _showAdDebugToast('Force Unity rewarded fallback enabled');
+    if (_preferUnityRewarded) {
+      _showAdDebugToast('Unity rewarded mode enabled');
       final unityRewarded = await _showUnityRewardedAdFallback();
       if (unityRewarded) {
         _showAdDebugToast('Reward flow success via Unity');
@@ -9033,12 +9322,18 @@ class _ArticlePageState extends State<ArticlePage> {
     }
     ad ??= await _loadRewardedAdOnce();
     if (ad == null) {
-      _showAdDebugToast('AdMob rewarded unavailable. Trying Unity fallback.');
-      final unityRewarded = await _showUnityRewardedAdFallback();
-      if (unityRewarded) {
-        _loadRewardedAd();
-        _showAdDebugToast('Reward flow success via Unity fallback');
-        return _RewardAdResult.rewarded;
+      if (_allowUnityRewardedFallback) {
+        _showAdDebugToast('AdMob rewarded unavailable. Trying Unity fallback.');
+        final unityRewarded = await _showUnityRewardedAdFallback();
+        if (unityRewarded) {
+          _loadRewardedAd();
+          _showAdDebugToast('Reward flow success via Unity fallback');
+          return _RewardAdResult.rewarded;
+        }
+      } else {
+        _showAdDebugToast(
+          'AdMob rewarded unavailable and Unity fallback disabled',
+        );
       }
       _loadRewardedAd();
       _showAdDebugToast('Reward flow unavailable (all ad providers failed)');
@@ -9095,10 +9390,12 @@ class _ArticlePageState extends State<ArticlePage> {
       _showAdDebugToast('AdMob rewarded show exception: $error');
       ad.dispose();
       _loadRewardedAd();
-      final unityRewarded = await _showUnityRewardedAdFallback();
-      if (unityRewarded) {
-        _showAdDebugToast('Reward flow recovered via Unity fallback');
-        return _RewardAdResult.rewarded;
+      if (_allowUnityRewardedFallback) {
+        final unityRewarded = await _showUnityRewardedAdFallback();
+        if (unityRewarded) {
+          _showAdDebugToast('Reward flow recovered via Unity fallback');
+          return _RewardAdResult.rewarded;
+        }
       }
       _showTokenMessage('Ad unavailable. Proceeding without reward.');
       return _RewardAdResult.unavailable;
@@ -9116,11 +9413,15 @@ class _ArticlePageState extends State<ArticlePage> {
       _loadRewardedAd();
     }
     if (!rewarded) {
-      _showAdDebugToast('AdMob rewarded not earned. Trying Unity fallback.');
-      final unityRewarded = await _showUnityRewardedAdFallback();
-      if (unityRewarded) {
-        _showAdDebugToast('Reward flow success via Unity after AdMob miss');
-        return _RewardAdResult.rewarded;
+      if (_allowUnityRewardedFallback) {
+        _showAdDebugToast('AdMob rewarded not earned. Trying Unity fallback.');
+        final unityRewarded = await _showUnityRewardedAdFallback();
+        if (unityRewarded) {
+          _showAdDebugToast('Reward flow success via Unity after AdMob miss');
+          return _RewardAdResult.rewarded;
+        }
+      } else {
+        _showAdDebugToast('AdMob rewarded not earned and Unity disabled');
       }
       if (adFailedToShow || !adShown) {
         _showAdDebugToast(
