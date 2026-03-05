@@ -5108,22 +5108,35 @@ class _NewsHomePageState extends State<NewsHomePage>
             ),
           )
         else
-          Wrap(
-            alignment: WrapAlignment.center,
-            runAlignment: WrapAlignment.center,
-            spacing: 12,
-            runSpacing: 12,
-            children: _iapProducts.map((product) {
-              final tokens = _iapProductTokens[product.id];
-              if (tokens == null) return const SizedBox.shrink();
-              return _TokenPackTile(
-                tokens: tokens,
-                product: product,
-                onPressed: _iapPurchaseInFlight
-                    ? null
-                    : () => _buyProduct(product),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const spacing = 12.0;
+              final maxWidth = constraints.maxWidth.isFinite
+                  ? constraints.maxWidth
+                  : MediaQuery.of(context).size.width;
+              final tileWidth = ((maxWidth - spacing) / 2).clamp(108.0, 180.0);
+              return Wrap(
+                alignment: WrapAlignment.center,
+                runAlignment: WrapAlignment.center,
+                spacing: spacing,
+                runSpacing: spacing,
+                children: _iapProducts.map((product) {
+                  final tokens = _iapProductTokens[product.id];
+                  if (tokens == null) return const SizedBox.shrink();
+                  return SizedBox(
+                    width: tileWidth,
+                    child: _TokenPackTile(
+                      width: tileWidth,
+                      tokens: tokens,
+                      product: product,
+                      onPressed: _iapPurchaseInFlight
+                          ? null
+                          : () => _buyProduct(product),
+                    ),
+                  );
+                }).toList(),
               );
-            }).toList(),
+            },
           ),
       ],
     );
@@ -10704,11 +10717,13 @@ class NewsItem {
 
 class _TokenPackTile extends StatelessWidget {
   const _TokenPackTile({
+    this.width = 140,
     required this.tokens,
     required this.product,
     this.onPressed,
   });
 
+  final double width;
   final int tokens;
   final _StoreProduct product;
   final VoidCallback? onPressed;
@@ -10724,7 +10739,7 @@ class _TokenPackTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       onTap: onPressed,
       child: Container(
-        width: 140,
+        width: width,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface.withOpacity(0.94),
